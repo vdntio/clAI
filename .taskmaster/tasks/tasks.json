@@ -1,0 +1,895 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Project Setup and CLI Skeleton",
+        "description": "Initialize the project structure for a compiled Rust binary (single executable) that is shell-agnostic, working in any POSIX shell (bash, zsh, fish) and PowerShell without runtime dependencies. Create basic CLI skeleton with argument parsing, help, version, and standard flags using Rust's clap crate for POSIX/PowerShell compatibility. Emphasize static linking where possible for maximum portability and smooth installation by placing the single binary in PATH. Follow functional programming paradigms: prefer pure functions, immutable data structures, composition over inheritance, and minimal side effects. Adhere to UNIX philosophy: do one thing well (translate natural language to commands), be composable via pipes, use stdin/stdout/stderr properly as a small, focused tool.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Use Rust 1.80+ with clap 4.5+. Create Cargo.toml with dependencies: clap, toml, serde, sysinfo, regex, signal-hook, xdg, directories. Enable static linking where possible (e.g., musl target for Linux with x86_64-unknown-linux-musl, or RUSTFLAGS='-C target-feature=+crt-static' for glibc targets) to produce a single portable executable with no runtime dependencies[1][2][7]. Implement main.rs with App::new('clai'), positional arg <INSTRUCTION>, flags: -h/--help, -V/--version, -q/--quiet, -v/--verbose, --no-color, -i/--interactive, -f/--force, -n/--dry-run, -m/--model, -p/--provider. Structure code using functional programming: pure functions for argument parsing and validation, immutable configs/data, function composition for CLI handling, minimal side effects (I/O isolated to main). Ensure shell-agnostic behavior across POSIX shells (bash, zsh, fish) and PowerShell with strict stdin/stdout/stderr separation for pipe composability (stdout: clean commands only; stderr: logs/warnings). Handle TERM=dumb and NO_COLOR env vars for color detection. Exit codes: 0 success, 2 invalid args. Signal handling: SIGINT=130, SIGTERM clean, SIGPIPE silent.",
+        "testStrategy": "cargo test for clap parsing edge cases (missing arg, invalid flags, help/version output) using pure functions. Verify exit codes with assert_eq!(cmd_status.code(), Some(2)). Test color detection with env vars. Manual shell tests in bash/zsh/fish/pwsh to confirm shell-agnostic behavior and pipe composability (e.g., echo 'test' | clai | wc -l). Test static binary portability by building with musl target (x86_64-unknown-linux-musl) or glibc static flags and running in clean environments without dependencies[1][2]. Unit tests for functional purity: mock I/O, assert no side effects in pure functions.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Cargo Project and Configure Dependencies",
+            "description": "Create new Rust binary project and set up Cargo.toml with all required dependencies and static linking configuration.",
+            "dependencies": [],
+            "details": "Run `cargo new clai --bin` to create binary project structure. Add dependencies in Cargo.toml: clap = '4.5', toml = '0.8', serde = { version = '1.0', features = ['derive'] }, sysinfo, regex, signal-hook, xdg, directories. Configure [profile.release] with codegen-units = 1, lto = true, panic = 'abort' for optimization. Add build script instructions for musl target (x86_64-unknown-linux-musl) and RUSTFLAGS='-C target-feature=+crt-static'.\n<info added on 2026-01-03T15:47:37.622Z>\nCompleted: Cargo project initialized in root directory with all required dependencies. Binary name set to 'clai'. All dependencies resolve successfully using rustls-tls for reqwest (better portability than OpenSSL). Release profile configured with LTO, codegen-units=1, panic=abort, and strip=true. Verified binary builds successfully.\n</info added on 2026-01-03T15:47:37.622Z>",
+            "status": "done",
+            "testStrategy": "Verify `cargo check` succeeds without errors. Confirm all dependencies resolve with `cargo tree`. Test cross-compilation targets build successfully.",
+            "updatedAt": "2026-01-03T15:47:32.303Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Implement Basic CLI Parser with Clap and Standard Flags",
+            "description": "Create argument parsing structure using clap with positional <INSTRUCTION> argument and all specified flags.",
+            "dependencies": [
+              1
+            ],
+            "details": "In src/main.rs, use clap::Command::new('clai').arg(clap::Arg::new('INSTRUCTION').required(true)).arg(clap::Arg::new('model')).arg(clap::Arg::new('provider')).flag for -h/--help, -V/--version, -q/--quiet, -v/--verbose, --no-color, -i/--interactive, -f/--force, -n/--dry-run. Implement pure function parse_args() -> Result<Config, Error> that returns immutable Config struct with clap values. Handle clap errors with exit code 2.\n<info added on 2026-01-03T16:25:16.491Z>\nImplemented CLI parser using clap 4.5 with derive macros. All required flags implemented: -h/--help, -V/--version, -q/--quiet, -v/--verbose, --no-color, -i/--interactive, -f/--force, -n/--dry-run, -m/--model, -p/--provider, -c/--context, --offline. Created pure function parse_args() -> Result<Config, clap::Error> that returns immutable Config struct. Proper error handling: exit code 2 for invalid usage, exit code 0 for --help/--version. All 6 integration tests passing. Follows functional programming principles with pure functions and immutable data structures.\n</info added on 2026-01-03T16:25:16.491Z>",
+            "status": "done",
+            "testStrategy": "Unit tests for clap parsing: missing INSTRUCTION returns exit 2, invalid flags exit 2, help/version output correct, all flags parse correctly with `assert_matches!`.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:25:09.635Z"
+          },
+          {
+            "id": 3,
+            "title": "Add Functional Programming Structure with Pure Functions",
+            "description": "Refactor main.rs into modular pure functions following functional programming paradigms and immutable data.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Create modules: src/cli.rs (pure arg parsing), src/config.rs (immutable Config struct), src/output.rs (pure formatting). Use function composition: main() orchestrates parse_args() |> build_config() |> handle_cli(). All data immutable (structs with Copy where possible). No side effects except isolated main I/O. Use Result/Option for error handling without exceptions.\n<info added on 2026-01-03T16:30:08.418Z>\nCompleted: Refactored main.rs into modular pure functions following functional programming paradigms. Created three modules: src/cli.rs (pure arg parsing with parse_args()), src/config.rs (immutable Config struct with from_cli() transformation), src/output.rs (pure formatting functions). Main function uses function composition: parse_args() |> Config::from_cli() |> handle_cli(). All data structures are immutable (Config implements Clone, PartialEq, Eq). I/O side effects isolated to main() and handle_cli(). All 10 tests passing (4 unit tests for pure functions + 6 integration tests). Follows functional programming principles: pure functions, immutability, function composition, Result-based error handling.\n</info added on 2026-01-03T16:30:08.418Z>",
+            "status": "done",
+            "testStrategy": "Unit test pure functions independently: mock clap input to parse_args(), verify config immutability, test composition chain with `assert_eq!` on pure outputs.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:30:02.621Z"
+          },
+          {
+            "id": 4,
+            "title": "Implement Color Detection and Logging with Shell-Agnostic Behavior",
+            "description": "Add color detection respecting TERM/NO_COLOR env vars and proper stderr logging with verbosity levels.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Create pure function detect_color() -> bool checking NO_COLOR env, TERM=dumb, --no-color flag. Implement logging module with eprintln! for stderr only (stdout clean for pipes). Levels: --quiet (errors only), default (warnings), --verbose (info). Pure format_log(level, msg) -> String. Stdout emits ONLY generated commands, stderr ALL logs/warnings.\n<info added on 2026-01-03T16:34:31.471Z>\nCompleted implementation of color detection and logging with shell-agnostic behavior:\n\nColor Detection Module (src/color/mod.rs):\n- Implemented detect_color_auto() pure function that checks:\n  - NO_COLOR environment variable (no-color.org standard)\n  - TERM=dumb (POSIX standard)\n  - TTY detection using atty crate for stderr\n- Created ColorMode enum (Auto, Always, Never) with should_use_color() method\n- Pure function color_mode_from_config() to determine color mode from Config\n\nLogging Module (src/logging/mod.rs):\n- Implemented LogLevel enum (Error, Warning, Info, Debug, Trace) with ordering\n- Pure function format_log() that respects color mode\n- Logger struct with methods for different log levels\n- Log level determined by verbosity count: 0=Warning (default), 1=Info, 2=Debug, 3+=Trace\n- Quiet flag sets log level to Error only\n- All logging uses eprintln! to stderr only\n\nIntegration:\n- Updated main.rs to use Logger for all stderr output\n- Strict stdout/stderr separation: stdout = commands only, stderr = all logs/warnings\n- Default log level is Warning, so info/debug only show with verbose flags\n- Color detection respects NO_COLOR env var, TERM=dumb, and --no-color flag\n\nTesting:\n- All unit tests pass (11 tests)\n- Verified stdout clean (only command output)\n- Verified stderr contains logs (with appropriate verbosity)\n- Verified quiet mode suppresses logs\n- Verified color detection with NO_COLOR and --no-color flag\n- Verified TERM=dumb disables colors\n\nFunctional Programming Compliance:\n- All color detection functions are pure (no side effects)\n- All log formatting functions are pure\n- Logger methods isolate I/O side effects to log() method only\n- Immutable data structures throughout\n</info added on 2026-01-03T16:34:31.471Z>",
+            "status": "done",
+            "testStrategy": "Test color detection with env vars: NO_COLOR=1 disables, TERM=dumb disables. Verify --quiet suppresses logs. Test stdout clean (no logs), stderr separation.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:34:31.819Z"
+          },
+          {
+            "id": 5,
+            "title": "Add Signal Handling, Exit Codes, and UNIX Philosophy Compliance",
+            "description": "Implement signal handling, proper exit codes, and ensure pipe composability with strict stdin/stdout/stderr separation.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Use signal-hook for SIGINT=130, SIGTERM=clean shutdown, SIGPIPE=silent ignore. Exit codes: 0=success, 2=invalid args. Ensure TTY detection for interactive behavior only (isatty(1)==false → no prompts). Main side effects isolated: read stdin → pure process → write stdout/stderr. Test pipe compatibility: echo 'ls' | clai → clean stdout.\n<info added on 2026-01-03T16:36:22.249Z>\nCompleted implementation of signal handling, exit codes, and UNIX philosophy compliance:\n\n**Signals Module (src/signals/mod.rs):**\n- Implemented `ExitCode` enum following UNIX conventions:\n  - Success = 0\n  - InvalidArgs = 2\n  - Interrupted = 130 (SIGINT)\n  - GeneralError = 1\n- Created `setup_signal_handlers()` function that registers:\n  - SIGINT handler (Ctrl+C) - sets interrupt flag\n  - SIGTERM handler - clean shutdown\n  - SIGPIPE - handled by Rust's default behavior (no explicit handler needed)\n- Pure functions for TTY detection:\n  - `is_stdout_tty()`, `is_stdin_tty()`, `is_stderr_tty()`\n  - `is_interactive()` - checks if both stdin and stdout are TTYs\n  - `is_piped()` - checks if output is being piped\n- `is_interrupted()` pure function to check signal state\n\n**Main Function Updates:**\n- Signal handlers set up early in `main()`\n- Exit codes properly handled:\n  - Success: 0\n  - Invalid args: 2\n  - Interrupted: 130\n- Interruption checks at multiple points during execution\n- Proper error handling for clap errors with correct exit codes\n\n**UNIX Philosophy Compliance:**\n- Strict stdout/stderr separation maintained\n- Pipe compatibility verified (stdout clean for piping)\n- TTY detection for interactive behavior\n- Signal handling follows POSIX conventions\n\n**Testing:**\n- All unit tests pass (15 tests total)\n- Verified exit codes: 0 for success, 2 for invalid args\n- Verified stdout clean (only command output, 6 words)\n- Verified pipe compatibility\n- TTY detection functions are pure and consistent\n\n**Functional Programming Compliance:**\n- All TTY detection functions are pure (no side effects)\n- Signal state checking is pure (reads atomic state)\n- Exit code handling is explicit and type-safe\n</info added on 2026-01-03T16:36:22.249Z>",
+            "status": "done",
+            "testStrategy": "Manual shell tests: bash/zsh/fish/pwsh pipe tests (| wc -l works), SIGINT sends 130, SIGTERM cleans up. Verify exit codes with `echo $?`. Test TTY vs pipe behavior.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:36:22.581Z"
+          },
+          {
+            "id": 6,
+            "title": "Reorganize Project Structure Following Rust Best Practices",
+            "description": "Restructure the project to follow Rust CLI project directory best practices, organizing modules into proper folders instead of flat files in src/.",
+            "details": "Research and implement proper Rust CLI project structure: organize modules into domain-based folders (e.g., src/cli/, src/config/, src/output/), create src/lib.rs if needed for library code, ensure proper module hierarchy with mod.rs files, maintain functional programming principles. Move from flat src/*.rs structure to organized folder structure following Rust conventions.\n<info added on 2026-01-03T16:32:58.299Z>\nCompleted: Reorganized project structure following Rust CLI best practices. Created proper module hierarchy: src/cli/mod.rs, src/config/mod.rs, src/output/mod.rs. Added src/lib.rs for library code (enables better testability and reusability). Updated Cargo.toml to include [lib] section. Moved from flat src/*.rs structure to organized folder-based structure. All tests passing (6 integration + 4 unit tests). Maintained functional programming principles throughout. Structure now follows Rust conventions: modules organized by domain/feature in folders with mod.rs files.\n</info added on 2026-01-03T16:32:58.299Z>",
+            "status": "done",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "parentTaskId": 1,
+            "updatedAt": "2026-01-03T16:32:55.644Z",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-01-03T16:36:22.581Z"
+      },
+      {
+        "id": "2",
+        "title": "Configuration System",
+        "description": "Implement multi-level config hierarchy (CLI flags > env vars > configs) in TOML format with XDG compliance and secure key handling.",
+        "details": "Use toml 0.8+, serde. Config locations: CLI flags, env (CLAI_MODEL etc.), ./.clai.toml, $XDG_CONFIG_HOME/clai/config.toml, ~/.config/clai/config.toml, /etc/clai/config.toml. Parse sections [provider], [context], [safety], [ui]. API keys via env var refs only (600 perms check via std::fs::metadata). Defaults: max_files=10, max_history=3, dangerous_patterns list, color=auto. Lazy load on first access. Override with flags/env.",
+        "testStrategy": "Unit tests for config merging priority (flags override all). Integration tests creating temp config files in XDG paths, verify parsing and overrides. Test missing config falls back to defaults. Security test: attempt file read with wrong perms.",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Config Structures and Defaults",
+            "description": "Create Rust structs for all config sections with serde derive and implement comprehensive default values.",
+            "dependencies": [],
+            "details": "Define structs for [provider], [context], [safety], [ui] sections using #[derive(Serialize, Deserialize, Debug, Clone)]. Set defaults: max_files=10, max_history=3, dangerous_patterns=vec![], color=\"auto\". Use functional approach with const DEFAULT_CONFIG: Config. Ensure immutability with Clone support[1].\n<info added on 2026-01-03T16:51:56.687Z>\nCompleted implementation of config structures and defaults:\n\nFile Config Module (src/config/file.rs):\n- Created FileConfig struct with all config sections:\n  - provider: ProviderConfig (default provider, fallback list)\n  - context: ContextConfig (max_files=10, max_history=3, redact flags)\n  - safety: SafetyConfig (dangerous_patterns list, confirm_dangerous=true)\n  - ui: UiConfig (color=\"auto\")\n  - providers: HashMap for provider-specific configs (openrouter, ollama, etc.)\n- Created ProviderSpecificConfig for provider-specific settings (api_key_env, model, endpoint)\n- All structs derive: Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default\n- Used serde with #[serde(default)] and #[serde(rename_all = \"kebab-case\")] for TOML compatibility\n\nDefault Values:\n- max_files: 10\n- max_history: 3\n- dangerous_patterns: [\"rm -rf\", \"sudo rm\", \"mkfs\", \"dd if=\", \"> /dev/\", \"format\"]\n- confirm_dangerous: true\n- color: \"auto\"\n- default provider: \"openrouter\"\n\nFunctional Programming Compliance:\n- All default functions are pure (const-like behavior)\n- Default implementations use pure functions\n- All structs are immutable (Clone support)\n- No side effects in config structure definitions\n\nTesting:\n- Unit tests for default values\n- Serialize/deserialize round-trip test\n- Clone test for immutability\n- Dangerous patterns default test\n</info added on 2026-01-03T16:51:56.687Z>",
+            "status": "done",
+            "testStrategy": "Unit test: serialize/deserialize defaults, verify exact values match expected TOML output",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:51:56.995Z"
+          },
+          {
+            "id": 2,
+            "title": "Implement XDG-Compliant Config Path Discovery",
+            "description": "Build pure function to discover all config file paths in correct precedence order with XDG compliance.",
+            "dependencies": [],
+            "details": "Create fn discover_config_paths() -> Vec<PathBuf> returning: CLI (handled later), ./.clai.toml, $XDG_CONFIG_HOME/clai/config.toml, ~/.config/clai/config.toml, /etc/clai/config.toml. Use std::env::var(\"XDG_CONFIG_HOME\").unwrap_or_else(|| format!(\"{}/.config\", dirs::home_dir().unwrap().display())). Pure function, no side effects[1].\n<info added on 2026-01-03T16:53:33.681Z>\nImplementation completed. Config paths module created in src/config/paths.rs with discover_config_paths() pure function returning paths in precedence order: ./.clai.toml, $XDG_CONFIG_HOME/clai/config.toml, ~/.config/clai/config.toml, /etc/clai/config.toml. Helper functions implemented: get_xdg_config_path() reads XDG_CONFIG_HOME environment variable with fallback to ~/.config using directories crate for cross-platform home directory detection; get_home_config_path() resolves ~/.config path; config_file_exists() validates file existence; existing_config_paths() filters to only existing config files. XDG Base Directory Specification compliance verified: respects XDG_CONFIG_HOME environment variable, falls back to ~/.config when unset, avoids duplicate paths when XDG path equals home path. Functional programming principles maintained: all functions are pure with no state modifications, environment and filesystem reads do not cause side effects, immutable return values, deterministic output for identical environment state. Unit tests implemented covering path discovery order, XDG_CONFIG_HOME presence and absence scenarios, file existence validation, and pure function behavior verification (same input produces same output). Ready for integration with config loading in next subtask.\n</info added on 2026-01-03T16:53:33.681Z>",
+            "status": "done",
+            "testStrategy": "Unit tests: mock env vars, verify path order and fallback to ~/.config when XDG unset",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:53:33.949Z"
+          },
+          {
+            "id": 3,
+            "title": "Implement Secure File Loading with Permissions Check",
+            "description": "Create secure file loader that checks 0600 permissions and handles API key env var references.",
+            "dependencies": [
+              2
+            ],
+            "details": "Fn load_config_file(path: &Path) -> Result<Config, Error> using std::fs::metadata().permissions().mode() & 0o600 == 0o600. Read TOML with toml::from_str(&fs::read_to_string(path)?). Parse env var refs in API keys (e.g. ${API_KEY}). Lazy load via OnceCell or std::sync::Mutex. Stderr errors only[1].\n<info added on 2026-01-03T16:55:09.282Z>\nCompleted implementation of secure file loading with permissions check:\n\nConfig Loader Module (src/config/loader.rs):\n- Implemented load_config_file() function that:\n  - Checks if file exists\n  - Validates file permissions (must be 0600 on Unix)\n  - Reads file contents\n  - Parses TOML into FileConfig\n  - Returns ConfigLoadError on failure\n- Created ConfigLoadError enum with thiserror for proper error handling:\n  - NotFound, InsecurePermissions, ReadError, ParseError, PermissionCheckError\n- Implemented check_file_permissions() function:\n  - On Unix: checks that permissions are exactly 0600 (0o600)\n  - On non-Unix: no-op (different permission models)\n  - Uses std::os::unix::fs::PermissionsExt for mode checking\n- Implemented resolve_env_var_reference() function:\n  - Supports ${VAR_NAME} and $VAR_NAME formats\n  - Pure function that reads environment variables\n- Implemented load_all_configs() function:\n  - Loads configs from all discovered paths\n  - Merges configs in precedence order (highest priority overrides lower)\n  - Returns default config if no files exist\n  - Logs warnings to stderr for failed loads but continues\n\nSecurity:\n- Enforces 0600 permissions on Unix systems (read/write for owner only)\n- Rejects files with insecure permissions (e.g., 0644)\n- All errors logged to stderr (not stdout)\n\nFunctional Programming:\n- Pure functions where possible (resolve_env_var_reference)\n- I/O side effects isolated to file operations\n- Immutable config structures\n- Error handling via Result types\n\nTesting:\n- Unit tests for permission checking (secure and insecure)\n- Tests for file loading (nonexistent, valid)\n- Tests for environment variable resolution\n- Tests for loading all configs\n</info added on 2026-01-03T16:55:09.282Z>",
+            "status": "done",
+            "testStrategy": "Unit tests: create temp files with 644/600 perms, verify 644 rejected, 600 accepted",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T16:55:09.548Z"
+          },
+          {
+            "id": 4,
+            "title": "Build Multi-Level Config Merger with CLI/Env Override",
+            "description": "Implement config merging function respecting hierarchy: CLI flags > env vars > files > defaults.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "Fn merge_configs(cli: CliArgs, env: HashMap<String,String>, files: Vec<Config>) -> Config using functional fold/reduce pattern. CLI highest priority, then env (CLAI_MODEL etc.), then files in discovery order, finally defaults. Deep merge for nested sections. Immutable input/output[4].\n<info added on 2026-01-03T17:05:43.134Z>\nCompleted implementation of multi-level config merger with CLI/env override:\n\n**Config Merger Module (src/config/merger.rs):**\n- Implemented `merge_all_configs()` function that merges configs in precedence order:\n  1. CLI flags (highest priority)\n  2. Environment variables (CLAI_*)\n  3. Config files (in discovery order)\n  4. Defaults (lowest priority)\n- Created deep merge functions for all config sections:\n  - `merge_provider_config()` - merges provider settings\n  - `merge_context_config()` - merges context settings (max_files, max_history, redact flags)\n  - `merge_safety_config()` - merges safety settings (dangerous_patterns, confirm_dangerous)\n  - `merge_ui_config()` - merges UI settings (color)\n- Implemented `extract_env_config()` function:\n  - Reads all CLAI_* environment variables\n  - Converts to lowercase for consistency\n  - Supports format: CLAI_<SECTION>_<FIELD>\n- Implemented `merge_env_config()` function:\n  - Parses environment variables and applies to config\n  - Handles different types (strings, numbers, booleans, lists)\n  - Supports comma-separated lists for fallback providers and dangerous patterns\n- Implemented `merge_cli_config()` function:\n  - Applies CLI flags (--model, --provider) to config\n  - Creates provider-specific config entries when needed\n  - Handles provider selection and model assignment\n\n**Functional Programming:**\n- All merge functions are pure (take immutable inputs, return new config)\n- No side effects except reading environment variables\n- Immutable data structures throughout\n- Functional fold/reduce pattern for merging\n\n**Testing:**\n- Unit tests for environment variable extraction\n- Tests for CLI config merging\n- Tests for env config merging\n- Tests for file config merging\n- Tests for precedence (CLI > env > file > default)\n</info added on 2026-01-03T17:05:43.134Z>",
+            "status": "done",
+            "testStrategy": "Unit tests: verify CLI flag overrides file value, env overrides file but not CLI, files override defaults",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:05:43.436Z"
+          },
+          {
+            "id": 5,
+            "title": "Integrate Lazy Config Loader into Application Entry",
+            "description": "Create lazy global config accessor and integrate into main CLI parsing flow.",
+            "dependencies": [
+              4
+            ],
+            "details": "Use once_cell::sync::Lazy<Mutex<Config>> for thread-safe lazy init. Fn get_config() -> RwLockReadGuard<Config> triggers load on first access. Parse clap args first, extract CLI config overrides, then env vars, then files. Expose via app context. Stdout clean, errors to stderr.\n<info added on 2026-01-03T17:08:05.423Z>\nImplementation completed with lazy config caching using once_cell::sync::Lazy<Mutex<Option<Result<FileConfig, ConfigLoadError>>>>. Config cache module created in src/config/cache.rs with get_file_config() function that triggers loading on first access and caches results for thread-safe subsequent calls. Merges configs from files, env vars, and CLI in correct precedence order. Added reset_config_cache() function for testing to force reload. Main function updated to call get_file_config() after CLI argument parsing, with config loading errors logged to stderr and file config loaded lazily only on first access. Runtime Config still created from CLI with CLI flags taking precedence. ConfigLoadError derives Clone for cache storage, errors properly cached and returned on subsequent calls. All errors directed to stderr maintaining stdout cleanliness for piping. Implements lazy initialization pattern loading only when needed with immutable cached config and thread-safe Mutex access without global mutable state. Unit tests verify cache functionality and reload capability, integration with main function confirmed.\n</info added on 2026-01-03T17:08:05.423Z>",
+            "status": "done",
+            "testStrategy": "Integration test: mock clap args + temp config files, verify final merged config values and lazy init called once",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:08:05.714Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T17:08:05.714Z"
+      },
+      {
+        "id": "3",
+        "title": "Context Gathering",
+        "description": "Collect system, directory, history, and stdin context following FR-2 specs with configurable limits.",
+        "details": "Use sysinfo for OS/shell/arch/user. Cwd via std::env::current_dir(). Top N files/dirs via fs::read_dir(), truncate long paths. History: tail-read ~/.bash_history|zsh_history|fish_history (N=3 default), detect shell via $SHELL. Stdin: read_to_string() if piped. Redact paths/usernames if config.redact_paths=true. Cache static system info per run. Format as structured prompt context.",
+        "testStrategy": "Mock sysinfo/fs/read_dir for unit tests. Integration: create temp dirs/history files, verify context strings match expected (truncated, redacted). Test stdin pipe: echo 'test' | cargo run. Verify limits (exactly 10 files).",
+        "priority": "high",
+        "dependencies": [
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement System Information Gathering",
+            "description": "Create a pure function to collect OS, shell, architecture, and user info using sysinfo crate with caching per run.",
+            "dependencies": [],
+            "details": "Use sysinfo::System::new() for immutable system snapshot. Extract os_version(), name(), total_memory(), user() from std::env::var(\"USER\"). Cache in static RwLock<SystemInfo> with lazy_static. Return structured HashMap<String, String> for prompt formatting. Handle cross-platform gracefully.\n<info added on 2026-01-03T17:15:57.732Z>\nCompleted implementation of system information gathering:\n\n**System Info Module (src/context/system.rs):**\n- Created `SystemInfo` struct with fields:\n  - os_name, os_version, architecture, shell, user, total_memory\n- Implemented `get_system_info()` function:\n  - Uses lazy caching with `once_cell::sync::Lazy<RwLock<Option<SystemInfo>>>`\n  - Collects system info on first access, caches for subsequent calls\n  - Thread-safe: uses RwLock for interior mutability\n  - Uses sysinfo::System for OS information\n  - Gets shell from $SHELL environment variable\n  - Gets user from $USER or $USERNAME environment variable\n  - Gets architecture from std::env::consts::ARCH\n- Implemented `format_system_info()` pure function:\n  - Converts SystemInfo to HashMap<String, String> for prompt formatting\n  - Includes all fields with memory in MB\n- Implemented `get_formatted_system_info()` convenience function\n\n**API Usage:**\n- Uses sysinfo 0.37 API: System::name() and System::os_version() as associated functions\n- System::new() and system.refresh_all() for system snapshot\n- system.total_memory() for memory information\n\n**Functional Programming:**\n- Caching pattern: lazy initialization, immutable cached data\n- Pure formatting function (no side effects)\n- Thread-safe access via RwLock\n- Immutable SystemInfo struct (Clone, PartialEq, Eq)\n\n**Testing:**\n- Unit tests for caching (verifies same result on multiple calls)\n- Tests for formatting (verifies all fields present)\n- Tests for pure function behavior\n- Tests for required fields presence\n</info added on 2026-01-03T17:15:57.732Z>",
+            "status": "done",
+            "testStrategy": "Unit test with sysinfo mock crate, verify exact fields extracted and cached once per run. Test memory usage under 1MB.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:15:58.058Z"
+          },
+          {
+            "id": 2,
+            "title": "Implement Directory Context Scanner",
+            "description": "Build function to scan current working directory for top N files/dirs with path truncation and redaction support.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use std::env::current_dir() then fs::read_dir(). Sort entries by name, take top N (config.max_files default 10). Truncate paths >80 chars to basename. Redact if config.redact_paths: replace username/home with [REDACTED]. Return vec of truncated paths as strings.\n<info added on 2026-01-03T17:18:18.733Z>\nImplementation completed successfully. Directory scanner module created at src/context/directory.rs with scan_directory() function using std::env::current_dir() and fs::read_dir(). Entries sorted alphabetically, limited to configurable max_files (default 10), with paths >80 chars truncated to basename. Path redaction implemented via redact_path() function replacing ~/, /home/username/, and $HOME/ with [REDACTED]. Pure helper functions truncate_path() and redact_path() provide deterministic, side-effect-free behavior. Integration test suite validates truncation (short/long paths), redaction (home directory variants, tilde expansion, username patterns), sorting, file limits (exactly 10 from 15 test files), empty directory handling, and edge cases. All 8 unit and integration tests passing. Error handling returns empty vec on failure. Output is immutable Vec<String> with deterministic ordering suitable for context generation.\n</info added on 2026-01-03T17:18:18.733Z>",
+            "status": "done",
+            "testStrategy": "Create temp dir with 15 files/subdirs, verify exactly N returned sorted alphabetically, truncation works, redaction hides ~/ paths.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:18:19.021Z"
+          },
+          {
+            "id": 3,
+            "title": "Implement Shell History Reader",
+            "description": "Create cross-shell history reader that detects $SHELL and tail-reads last N lines from bash_history/zsh_history/fish_history.",
+            "dependencies": [
+              1
+            ],
+            "details": "Detect shell via std::env::var(\"SHELL\"). Map to paths: ~/.bash_history, ~/.zsh_history, ~/.local/share/fish/fish_history. Use tail-like logic: seek to end-4096 bytes, read lines, take last N (default 3). Handle missing files gracefully. Return vec<String> of last commands.\n<info added on 2026-01-03T17:20:17.453Z>\nCompleted implementation of shell history reader:\n\n**History Reader Module (src/context/history.rs):**\n- Implemented `detect_shell()` function:\n  - Reads $SHELL environment variable\n  - Extracts shell name from path (e.g., \"/usr/bin/bash\" -> \"bash\")\n  - Returns \"unknown\" if $SHELL not set\n  \n- Implemented `get_history_path()` function:\n  - Maps shell names to history file paths:\n    - bash: ~/.bash_history\n    - zsh: ~/.zsh_history\n    - fish: ~/.local/share/fish/fish_history\n  - Returns None for unsupported shells\n  \n- Implemented `read_history_tail()` function:\n  - Uses efficient tail-like logic:\n    1. Seeks to end of file minus 4096 bytes (or start if file is smaller)\n    2. Reads all lines from that position\n    3. Takes last N lines (configurable max_history parameter, default 3)\n  - Handles missing files gracefully (returns empty vec)\n  - Handles empty files gracefully (returns empty vec)\n  \n- Implemented `get_shell_history()` convenience function:\n  - Combines shell detection, path resolution, and tail reading\n  - Returns last N commands from detected shell's history\n\n**Functional Programming:**\n- Pure functions for shell detection and path mapping (no side effects)\n- Efficient file reading with seek optimization (only reads last 4KB)\n- Graceful error handling (returns empty vec on failure)\n- Immutable return values (Vec<String>)\n\n**Testing:**\n- Unit tests for shell detection (pure function behavior)\n- Unit tests for path mapping (bash, zsh, fish, unknown)\n- Integration tests for tail reading (small files, large files, missing files, empty files)\n- Test for convenience function\n- All 11 tests pass successfully\n</info added on 2026-01-03T17:20:17.453Z>",
+            "status": "done",
+            "testStrategy": "Create temp history files for each shell, verify detects correct path and returns exactly N recent lines. Test missing file returns empty vec.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:20:17.741Z"
+          },
+          {
+            "id": 4,
+            "title": "Implement Stdin Detection and Reading",
+            "description": "Build function to detect piped stdin and read_to_string() with configurable limits, handling empty/non-piped cases.",
+            "dependencies": [],
+            "details": "Check isatty(0)==false via atty crate or fallback. If piped: std::io::stdin().read_to_string() with limit (config.max_stdin_bytes). Truncate if exceeds. Return Option<String> - None if not piped/empty, Some(content) otherwise. Pure function, no side effects.\n<info added on 2026-01-03T17:24:47.674Z>\nCompleted implementation of stdin detection and reading:\n\n**Stdin Module (src/context/stdin.rs):**\n- Implemented `is_stdin_piped()` function:\n  - Uses `atty::is(atty::Stream::Stdin)` to detect if stdin is a TTY\n  - Returns true if stdin is piped (not a TTY), false otherwise\n  - Pure function - checks TTY status\n  \n- Implemented `read_stdin()` function:\n  - Checks if stdin is piped using `is_stdin_piped()`\n  - Returns None if stdin is not piped (is a TTY)\n  - Reads from stdin with configurable byte limit (max_bytes parameter)\n  - Truncates input if it exceeds max_bytes\n  - Handles empty pipes gracefully (returns Some(\"\"))\n  - Handles invalid UTF-8 gracefully using `String::from_utf8_lossy()`\n  - Returns Some(content) with the read content (possibly truncated)\n  \n- Implemented `read_stdin_default()` convenience function:\n  - Calls `read_stdin()` with default 10KB limit\n  - Provides easy access for common use case\n\n**Functional Programming:**\n- Pure detection function (is_stdin_piped) - no side effects\n- Main function has I/O side effects (reads stdin) but returns immutable Option<String>\n- Graceful error handling (returns None on error, Some(\"\") for empty pipe)\n- UTF-8 handling with lossy conversion for invalid sequences\n\n**Implementation Details:**\n- Uses `atty` crate (already in dependencies) for TTY detection\n- Uses `std::io::stdin().read()` for efficient byte reading\n- Default limit: 10KB (configurable via max_bytes parameter)\n- Handles edge cases: empty pipes, invalid UTF-8, non-piped stdin\n\n**Testing:**\n- Unit tests for TTY detection (pure function behavior)\n- Tests for non-piped stdin (returns None)\n- Tests for empty pipe handling\n- Tests for default limit function\n- All 5 tests pass successfully\n\n**Note:** Currently uses default 10KB limit. If config.max_stdin_bytes is needed, it can be added to ContextConfig in the future.\n</info added on 2026-01-03T17:24:47.674Z>",
+            "status": "done",
+            "testStrategy": "Test via 'echo test | cargo run' captures 'test\\n'. Test empty pipe returns Some(\"\"), non-piped returns None. Verify byte limit truncation.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:24:48.036Z"
+          },
+          {
+            "id": 5,
+            "title": "Implement Context Formatter and Orchestrator",
+            "description": "Create main orchestrator function composing all context sources into structured JSON prompt context with redaction applied.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Pure function gather_context(config: &Config) -> Result<String>. Compose: {\"system\": sysinfo, \"cwd\": path, \"files\": vec, \"history\": vec, \"stdin\": opt}. Apply uniform redaction. Pretty-print as 2-space JSON. Cache composite if all static sources unchanged. Error handling with anyhow.\n<info added on 2026-01-03T17:26:29.511Z>\nCompleted implementation of context formatter and orchestrator in src/context/gatherer.rs: ContextData struct (system: HashMap, cwd: String, files: Vec<String>, history: Vec<String>, stdin: Option<String>); gather_context() orchestrator collects from get_formatted_system_info(), std::env::current_dir(), scan_directory(), get_shell_history(), read_stdin_default(), applies redaction, formats as 2-space JSON via format_context_json() pure function using serde_json; get_context_json() wrapper with error JSON; apply_redaction() helper. Integration uses get_file_config() with defaults; JSON: {\"system\": {...}, \"cwd\": \"...\", \"files\": [...], \"history\": [...], \"stdin\": ...|null}. Unit/integration tests pass (4 total). Added serde_json dep, exported module, pub(crate) redact_path_internal(). Note: caching for static sources pending.\n</info added on 2026-01-03T17:26:29.511Z>",
+            "status": "done",
+            "testStrategy": "Integration test with temp setup verifies full JSON structure, redaction consistent across fields, exactly matches expected format string.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:26:29.860Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T17:26:29.860Z"
+      },
+      {
+        "id": "4",
+        "title": "AI Provider Abstraction and Prompting",
+        "description": "Implement provider-agnostic AI interface with OpenRouter first, fallbacks, model selection, and clean command extraction.",
+        "details": "Trait Provider with impl for OpenRouter (reqwest post to api.openrouter.ai), Anthropic, OpenAI, Ollama (local http). Fallback chain from config. Prompt template: system context + dir context + history + user instruction + 'Respond ONLY with executable command, strip markdown/fences.' Use tokio for async. Extract command: regex to strip ```bash etc., trim. Stdout ONLY command, errors to stderr. --offline mode: early exit 1.",
+        "testStrategy": "Mock HTTP responses for each provider. Test fallback chain (mock primary 500, verify next called). Regex unit tests for markdown stripping (````bash\ncmd\n```` -> 'cmd'). Mock Ollama local server test.",
+        "priority": "high",
+        "dependencies": [
+          "2",
+          "3"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Provider Trait and Core Abstractions",
+            "description": "Create the Provider trait with async methods for chat completions and define supporting types for requests/responses using functional abstractions.",
+            "dependencies": [],
+            "details": "Define trait Provider: async fn complete(&self, req: ChatRequest) -> Result<ChatResponse>. Use enums for ChatMessage { role: Role, content: String }, Role::System|User|Assistant. Structs ChatRequest/Response immutable. Ensure object-safe with dyn Provider + Send + Sync.\n<info added on 2026-01-03T17:29:57.886Z>\n**Subtask 4.1 Status: Completed**\n\nCompleted implementation of Provider trait and core abstractions:\n\n**AI Module Structure (src/ai/):**\n- Created `mod.rs` with module organization\n- Created `types.rs` for core data structures\n- Created `provider.rs` for Provider trait\n\n**Types Module (src/ai/types.rs):**\n- Implemented `Role` enum:\n  - System, User, Assistant variants\n  - Serializes to lowercase strings (\"system\", \"user\", \"assistant\")\n  \n- Implemented `ChatMessage` struct:\n  - Immutable message with role and content\n  - Convenience constructors: `system()`, `user()`, `assistant()`\n  - Pure functions for creation\n  \n- Implemented `ChatRequest` struct:\n  - Immutable request with messages, optional model, temperature, max_tokens\n  - Builder pattern methods: `with_model()`, `with_temperature()`, `with_max_tokens()`\n  - Note: Does not implement Eq (temperature is f64)\n  \n- Implemented `ChatResponse` struct:\n  - Immutable response with content, optional model, optional usage\n  - Builder pattern methods: `with_model()`, `with_usage()`\n  \n- Implemented `Usage` struct:\n  - Token usage statistics (prompt_tokens, completion_tokens, total_tokens)\n\n**Provider Trait (src/ai/provider.rs):**\n- Defined `Provider` trait:\n  - `async fn complete(&self, request: ChatRequest) -> Result<ChatResponse>`\n  - `fn name(&self) -> &str`\n  - `fn is_available(&self) -> bool` (default implementation returns true)\n  - Trait is object-safe (Send + Sync bounds for thread safety)\n  \n- Created `MockProvider` for testing:\n  - Implements Provider trait\n  - Supports success and failure scenarios\n  - Used in unit tests\n\n**Functional Programming:**\n- All structs are immutable (Clone for copying)\n- Pure constructor functions\n- Builder pattern for optional fields\n- No side effects in type definitions\n\n**Testing:**\n- Unit tests for message creation\n- Tests for request immutability\n- Tests for builder pattern\n- Tests for response creation\n- Tests for serialization/deserialization\n- Tests for Provider trait (mock implementation)\n- Tests for object safety (trait objects)\n- All tests pass successfully\n\n**Integration:**\n- Added `ai` module to `src/lib.rs`\n- Re-exported types and trait for convenience\n</info added on 2026-01-03T17:29:57.886Z>",
+            "status": "done",
+            "testStrategy": "Unit test trait compilation with mock impl. Verify request/response serialization with serde.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:29:58.237Z"
+          },
+          {
+            "id": 2,
+            "title": "Implement OpenRouter Provider",
+            "description": "Create OpenRouter struct and impl Provider trait using reqwest for POST to api.openrouter.ai/api/v1/chat/completions.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use tokio::spawn for async reqwest::Client.post(url).headers(\"Authorization\", format!(\"Bearer {}\", key)).json(&openai_compat_req).send().await. Map OpenAI format response to ChatResponse. Handle API keys from config/env securely. Add rate-limit retry logic.\n<info added on 2026-01-03T17:32:26.073Z>\nCompleted implementation of OpenRouter provider:\n\n**OpenRouter Provider Module (src/ai/providers/openrouter.rs):**\n- Implemented `OpenRouterProvider` struct:\n  - HTTP client with 60s timeout\n  - API key storage\n  - Optional default model\n  - Thread-safe (Send + Sync)\n  \n- Implemented Provider trait:\n  - `complete()`: Makes async HTTP POST to OpenRouter API\n  - `name()`: Returns \"openrouter\"\n  - `is_available()`: Checks if API key is set\n  \n- API Integration:\n  - Endpoint: `https://openrouter.ai/api/v1/chat/completions`\n  - Authentication: Bearer token in Authorization header\n  - Optional headers: HTTP-Referer, X-Title for attribution\n  - Uses OpenAI-compatible request/response format\n  \n- Request/Response Conversion:\n  - `to_openai_message()`: Converts our ChatMessage to OpenAI format\n  - `from_openai_response()`: Converts OpenAI response to our ChatResponse\n  - Handles model, usage statistics, and content extraction\n  \n- Error Handling:\n  - `make_request_with_retry()`: Implements exponential backoff for rate limits (429)\n  - Retries up to 3 times with increasing delays (1s, 2s, 4s)\n  - Proper error messages for API failures\n  \n- Helper Functions:\n  - `api_key_from_env()`: Reads OPENROUTER_API_KEY from environment\n  - `new()`: Creates provider with API key and optional default model\n\n**Dependencies:**\n- Added `async-trait = \"0.1\"` to Cargo.toml for async trait support\n- Uses existing `reqwest` and `tokio` for HTTP and async\n\n**Functional Programming:**\n- Immutable provider struct (Clone for copying)\n- Pure conversion functions\n- Error handling with Result types\n- No side effects in conversion logic\n\n**Testing:**\n- Unit tests for provider creation\n- Tests for API key availability check\n- Tests for message conversion\n- Tests for response conversion\n- All tests pass successfully\n\n**API Research:**\n- Researched OpenRouter API documentation\n- Confirmed OpenAI-compatible format\n- Verified authentication and headers\n- Documented rate limit handling\n</info added on 2026-01-03T17:32:26.073Z>",
+            "status": "in-progress",
+            "testStrategy": "Mock reqwest responses with wiremock. Test successful completion, 429 retry, 401 auth fail.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:31:23.920Z"
+          },
+          {
+            "id": 3,
+            "title": "Implement Fallback Chain and Model Selection",
+            "description": "Build provider registry with fallback chain from config and model selection logic supporting provider-specific models.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Struct ProviderChain(Vec<String> providers from config.fallbacks). impl Provider for chain: try each sequentially until success. Model selection: parse \"provider/model\" or config.default_model. Support Ollama local fallback. Lazy init providers from config.\n<info added on 2026-01-03T17:34:05.938Z>\nCompleted implementation of fallback chain and model selection:\n\n**Provider Chain Module (src/ai/chain.rs):**\n- Implemented `ProviderChain` struct:\n  - List of provider names in fallback order\n  - Lazy-initialized provider instances with interior mutability (Arc<Mutex<Vec<Option<Arc<dyn Provider>>>>>)\n  - File config for provider settings\n  - Thread-safe lazy initialization\n  \n- Implemented Provider trait for chain:\n  - `complete()`: Tries each provider sequentially until one succeeds\n  - Continues to next provider on failure\n  - Returns error only if all providers fail\n  - `name()`: Returns \"provider-chain\"\n  - `is_available()`: Checks if at least one provider is available\n  \n- Provider Initialization:\n  - `init_provider()`: Creates provider instance by name\n  - Currently supports \"openrouter\" provider\n  - Reads API keys from config or environment variables\n  - Gets model from provider-specific config\n  \n- Model Selection:\n  - `parse_model()`: Parses model strings\n  - Supports \"provider/model\" format (e.g., \"openrouter/gpt-4o\")\n  - Supports \"model\" format (uses default provider)\n  - Returns (provider_name, model_name) tuple\n  \n- Chain Construction:\n  - `new()`: Creates chain from FileConfig\n  - Adds default provider to front if not in fallback list\n  - Maintains fallback order from config\n\n**Functional Programming:**\n- Immutable provider list (Vec<String>)\n- Thread-safe lazy initialization with Mutex\n- Pure model parsing function\n- Error handling with Result types\n\n**Testing:**\n- Unit tests for chain creation\n- Tests for model parsing (with and without provider prefix)\n- Tests for fallback order\n- All tests pass successfully\n\n**Note:** ProviderChain doesn't implement Clone (uses Arc<Mutex<...>>) for thread-safe lazy initialization. This is intentional.\n</info added on 2026-01-03T17:34:05.938Z>",
+            "status": "done",
+            "testStrategy": "Mock primary provider fail (500), verify fallback called. Test model parsing \"openrouter/gpt-4o\" routes correctly.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:34:06.314Z"
+          },
+          {
+            "id": 4,
+            "title": "Build Prompt Template and Command Extraction",
+            "description": "Create pure function to build prompt from contexts and regex-based command extraction stripping markdown fences.",
+            "dependencies": [],
+            "details": "Fn build_prompt(system: &str, dir_ctx: &str, history: &[String], instruction: &str) -> String concatenating template. Regex r#\"```(?:bash|sh|shell)?\\s*\n?(.*?)(?s)\\n?```\"# to capture command, trim whitespace. Fallback to full response if no match.\n<info added on 2026-01-03T17:36:37.190Z>\nCompleted implementation of prompt template and command extraction:\n\n**Prompt Module (src/ai/prompt.rs):**\n- Implemented `build_prompt()` pure function:\n  - Takes system context, directory context, history, and instruction\n  - Concatenates into structured prompt with sections:\n    - System Context (JSON)\n    - Directory Context (JSON)\n    - Recent Shell History (numbered list)\n    - User Instruction\n    - System instruction to respond with ONLY command\n  - Pure function - no side effects\n  \n- Implemented `extract_command()` pure function:\n  - Uses pre-compiled regex (lazy static) for performance\n  - Pattern: `(?s)```(?:bash|sh|shell)?\\s*\\n?(.*?)\\n?```\n  - Extracts command from markdown code fences\n  - Supports: ```bash, ```sh, ```shell, or just ```\n  - Trims whitespace from extracted command\n  - Falls back to full response (trimmed) if no fences found\n  \n- Implemented `build_chat_request()` pure function:\n  - Creates ChatRequest with system and user messages\n  - System message instructs AI to respond with ONLY command\n  - Optional model parameter\n  - Pure function - creates immutable request\n\n**Regex Optimization:**\n- Pre-compiled regex using `once_cell::sync::Lazy<Regex>`\n- Compiled once at first use, reused for all extractions\n- Improves performance by avoiding regex compilation on each call\n\n**Functional Programming:**\n- All functions are pure (no side effects)\n- Immutable data structures\n- Deterministic output for same input\n\n**Testing:**\n- Unit tests for command extraction:\n  - bash/sh/shell/no-lang fences\n  - Multi-line commands\n  - No fences (fallback)\n  - With explanations (extracts command only)\n  - Empty/whitespace handling\n- Unit tests for prompt building:\n  - With and without history\n  - All sections present\n- Unit tests for chat request building:\n  - With and without model\n- All 13 tests pass successfully\n\n**Default Model:**\n- Set default OpenRouter model to \"moonshot/kimi-v2\" (KimiK2)\n- Falls back to this if no model specified in request or config\n</info added on 2026-01-03T17:36:37.190Z>",
+            "status": "done",
+            "testStrategy": "Unit tests: ```bash ls -la ``` -> \"ls -la\". Multi-line cmds. No fences -> full text. Edge: empty, malformed fences.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:36:37.558Z"
+          },
+          {
+            "id": 5,
+            "title": "Integrate AI Interface with CLI Handling",
+            "description": "Wire up main async flow: context gathering -> prompt -> provider chain -> extract -> stdout command, with offline mode and error handling.",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "In main: if --offline { eprintln!(\"Offline mode\"); std::process::exit(1); }. Tokio runtime. Gather contexts (reuse Task 3), build_prompt, chain.complete(), extract_command(). Print ONLY command to stdout, errors to stderr. Proper Result/anyhow chaining.\n<info added on 2026-01-03T17:40:18.862Z>\nCompleted integration of AI interface with CLI handling:\n\n**AI Handler Module (src/ai/handler.rs):**\n- Implemented `generate_command()` async function:\n  - Orchestrates full flow: context gathering -> prompt building -> provider chain -> command extraction\n  - Gathers context using `gather_context()` from Task 3\n  - Parses context JSON to extract system, directory, history, stdin\n  - Builds prompt using `build_prompt()` with all context components\n  - Creates provider chain from file config\n  - Parses model string (supports \"provider/model\" format)\n  - Builds chat request with system/user messages\n  - Calls provider chain to get AI response\n  - Extracts command using `extract_command()`\n  - Returns generated command string\n\n**Main Integration (src/main.rs):**\n- Converted `main()` to async using `#[tokio::main]`\n- Added offline mode check: exits with error code 1 if --offline flag is set\n- Updated `handle_cli()` to async function\n- Integrated `generate_command()` into CLI flow\n- Maintains strict stdout/stderr separation:\n  - Command output goes to stdout ONLY\n  - Errors, warnings, debug info go to stderr\n- Proper error handling with anyhow::Result\n- Signal interruption checks throughout\n\n**Error Handling:**\n- Context gathering errors are handled gracefully\n- Provider chain errors are propagated with context\n- All errors printed to stderr (not stdout)\n- Exit codes follow UNIX conventions (0=success, 1=error, 2=invalid args, 130=interrupted)\n\n**Functional Programming:**\n- Pure functions for prompt building and command extraction\n- Immutable data structures\n- Function composition: gather -> build -> chain -> extract\n- Side effects isolated to handler and main\n\n**Testing Ready:**\n- Full integration ready for end-to-end testing\n- Can test with real OpenRouter API (requires API key)\n- Offline mode check implemented\n- Proper stdout/stderr separation for piping\n</info added on 2026-01-03T17:40:18.862Z>",
+            "status": "done",
+            "testStrategy": "Integration: mock contexts/config, end-to-end from instruction to stdout command. Test offline early exit(1). Pipe stdout verification.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T17:40:19.306Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T17:40:19.750Z"
+      },
+      {
+        "id": "5",
+        "title": "Safety and Dangerous Command Detection",
+        "description": "Pre-compile regex patterns from config, detect before output, handle interactive confirmations and flags.",
+        "details": "Regex::new() at startup for config.dangerous_patterns (defaults: rm -rf etc.). Match generated command. If TTY && confirm_dangerous && !--force: colored stderr warn + prompt [E]xecute/[C]opy/[A]bort (read_line). --dry-run: show + exit 0. --force/--quiet: output directly. User reject: exit 5. Pipe detect: isatty(1)==false -> no prompt.",
+        "testStrategy": "Unit tests for regex matches on dangerous patterns. Integration: pipe to test no prompt, TTY mock for interactive (mock stdin). Test all flags: --force bypass, --dry-run no exec, reject exits 5. 100% coverage on default patterns.",
+        "priority": "high",
+        "dependencies": [
+          "1",
+          "4"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Configurable Dangerous Pattern Regex Compilation",
+            "description": "Create a pure function to pre-compile regex patterns from config at startup with safe defaults for dangerous commands.",
+            "dependencies": [],
+            "details": "Define Config struct with Vec<String> dangerous_patterns (defaults: ['rm\\s+-rf\\s+/?', 'dd\\s+if=/dev/zero', 'mkfs.*\\s+/dev/']). Implement fn compile_dangerous_regexes(config: &Config) -> Result<Vec<Regex>, Box<dyn Error>> using Regex::new() in loop. Cache in immutable static or app state. Handle invalid regex gracefully with logging to stderr.\n<info added on 2026-01-03T19:34:14.548Z>\nCompleted implementation of configurable dangerous pattern regex compilation:\n\nSafety Module (src/safety/patterns.rs):\n- Implemented compile_dangerous_regexes() pure function:\n  - Takes FileConfig and compiles regex patterns from config\n  - Falls back to safe defaults if config patterns are empty\n  - Returns Result<Vec<Regex>> with detailed error messages\n  - Handles invalid regex patterns gracefully with stderr logging\n  - Pure function - no side effects (except error logging)\n  \n- Implemented get_dangerous_regexes() with lazy static caching:\n  - Uses OnceLock for thread-safe lazy initialization\n  - Compiles regexes once on first access\n  - Subsequent calls return cached compiled regexes\n  - Thread-safe and efficient\n  \n- Default dangerous patterns:\n  - rm -rf / (with variations)\n  - dd if=/dev/zero\n  - mkfs.* /dev/\n  - sudo rm -rf /\n  - > /dev/\n  - format C: (Windows)\n  - del /f /s C:\\ (Windows)\n  \nTesting:\n- Unit tests for default patterns compilation\n- Tests for pattern matching (rm -rf /, dd, etc.)\n- Tests for custom patterns\n- Tests for invalid regex error handling\n- Tests for empty patterns using defaults\n- Tests for safe commands not matching\n- All tests pass successfully\n\nModule Structure:\n- Created src/safety/mod.rs as module entry point\n- Exported compile_dangerous_regexes and get_dangerous_regexes\n- Added safety module to src/lib.rs\n</info added on 2026-01-03T19:34:14.548Z>",
+            "status": "done",
+            "testStrategy": "Unit test pure function: valid patterns compile, invalid patterns error correctly, defaults match 'rm -rf /' etc.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T19:34:14.903Z"
+          },
+          {
+            "id": 2,
+            "title": "Create Pure Command Danger Detection Function",
+            "description": "Implement immutable function to check if generated command matches any dangerous regex patterns.",
+            "dependencies": [
+              1
+            ],
+            "details": "fn is_dangerous_command(cmd: &str, regexes: &[Regex]) -> bool { regexes.iter().any(|r| r.is_match(cmd)) }. Pure, no side effects, thread-safe. Log matched pattern name/index to stderr if verbose.\n<info added on 2026-01-03T19:36:31.867Z>\nCompleted implementation of pure command danger detection function:\n\nDetector Module (src/safety/detector.rs):\n- Implemented is_dangerous_command() pure function:\n  - Takes command string and FileConfig\n  - Uses lazy-initialized compiled regexes from patterns module\n  - Returns bool (true if dangerous, false if safe)\n  - Pure function - no side effects, thread-safe\n  - Fail-safe: returns true if regex compilation failed (safety first)\n  \n- Implemented is_dangerous_command_with_regexes() lower-level function:\n  - Takes command and pre-compiled regexes directly\n  - Useful for testing or when regexes are already available\n  - Pure function - no side effects\n  \n- Implemented get_matching_pattern() helper function:\n  - Returns Option<(usize, String)> with index and pattern that matched\n  - Useful for verbose logging to show which pattern triggered\n  - Returns None if no match found\n  \nTesting:\n- Unit tests for safe commands (all return false)\n- Unit tests for dangerous commands (all return true)\n- Tests for empty/whitespace commands\n- Tests for whitespace handling in dangerous commands\n- Tests for get_matching_pattern functionality\n- All 7 tests pass successfully\n\nFunctional Programming:\n- All functions are pure (no side effects)\n- Immutable inputs\n- Deterministic output for same input\n- Thread-safe (uses shared immutable regexes)\n</info added on 2026-01-03T19:36:31.867Z>",
+            "status": "done",
+            "testStrategy": "Unit tests: safe commands return false, dangerous like 'rm -rf /' return true, edge cases (empty, whitespace).",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T19:36:32.724Z"
+          },
+          {
+            "id": 3,
+            "title": "Implement TTY and Flag Detection Logic",
+            "description": "Create composable functions to detect interactive mode conditions and parse relevant CLI flags.",
+            "dependencies": [
+              1
+            ],
+            "details": "fn should_prompt(cli_args: &Args, config: &Config) -> bool { is_tty() && config.confirm_dangerous && !cli_args.force && is_tty_stdout() }. Use crossterm::is_tty(1) for stdout check. fn is_tty() -> bool for stdin. Parse clap flags: --force, --quiet, --dry-run, --confirm-dangerous.",
+            "status": "done",
+            "testStrategy": "Unit tests mock clap args and tty state, verify all flag combinations correctly enable/disable prompting.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T19:40:04.891Z"
+          },
+          {
+            "id": 4,
+            "title": "Build Interactive Confirmation Prompt System",
+            "description": "Implement colored stderr warning and user input handler with [E]xecute/[C]opy/[A]bort options using read_line.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "fn handle_dangerous_confirmation(cmd: &str, regexes: &[Regex) -> Result<Decision, Error> where Decision::Execute|Copy|Abort. Use crossterm for colored yellow warning on stderr: '⚠️ DANGEROUS: {cmd}', prompt '[E]xecute/[C]opy/[A]bort?'. Parse single char input via std::io::stdin().read_line(). Handle EOF/pipe gracefully.",
+            "status": "done",
+            "testStrategy": "Integration test with mocked stdin providing 'E','C','A','invalid', verify decisions and stderr output.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T19:49:43.468Z"
+          },
+          {
+            "id": 5,
+            "title": "Integrate Safety Check into Main Command Output Pipeline",
+            "description": "Wire safety detection into main flow with proper flag handling, exit codes, and UNIX-compliant output behavior.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "In main pipeline: generate cmd -> if is_dangerous && should_prompt -> handle_confirmation -> match decision { Execute|Copy -> print cmd to stdout, Copy -> copy to clipboard via xclip/clip.exe if TTY, Abort -> eprintln!(\"Aborted.\"); std::process::exit(5) }. --dry-run: always print+exit(0). --force/--quiet: bypass. Pipes: no prompt.",
+            "status": "done",
+            "testStrategy": "End-to-end: generate dangerous cmd, test all paths (prompt/force/dry-run/pipe), verify exit codes 0/5, stdout content, stderr messages.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T20:20:04.705Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T20:20:04.705Z"
+      },
+      {
+        "id": "6",
+        "title": "Color, Logging, and Output Handling",
+        "description": "Implement color support (auto/always/never), verbosity levels, strict stdout/stderr separation.",
+        "details": "Use chalk 0.7+ or termcolor. Detect: NO_COLOR, CLICOLOR, TERM=dumb, TTY. Levels: -v debug (trace!), normal info, -q errors only. Stdout: ONLY command (no newline if piped?). Stderr: spinners/warns/errors/verbose. Locale aware via std::env::var('LANG').",
+        "testStrategy": "Test color output with/without TTY env. Verify NO_COLOR disables. Pipe test: stdout clean (wc -w matches command words only). Verbosity: capture stderr at levels, assert messages present/absent.",
+        "priority": "medium",
+        "dependencies": [
+          "1",
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Color Detection and Configuration",
+            "description": "Create a pure function to detect and configure color support based on CLI flags, environment variables, and TTY status.",
+            "dependencies": [],
+            "details": "Use owo-colors or colored crate. Check NO_COLOR, CLICOLOR, TERM=dumb, isatty() on stderr/stdout. CLI flags: --color=auto/always/never. Return enum ColorMode::Auto/Always/Never. Make immutable and composable for functional style.",
+            "status": "done",
+            "testStrategy": "Unit test env vars (NO_COLOR=1 disables), TTY mock, flag overrides. Verify ColorMode enum values.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:03:15.866Z"
+          },
+          {
+            "id": 2,
+            "title": "Define Logging Levels and Verbosity Parser",
+            "description": "Parse CLI verbosity flags into log levels with strict mapping and create a logging configuration struct.",
+            "dependencies": [
+              1
+            ],
+            "details": "Flags: -v (debug/trace), -vv (trace), normal (info), -q (error only). Use tracing/log crate levels. Pure parser function returns LogConfig { level: LevelFilter, verbose: u8 }. Integrate with color config from subtask 1.",
+            "status": "done",
+            "testStrategy": "Test clap parsing: cargo run -v, -vv, -q. Assert correct LevelFilter::Debug/Trace/Error.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:04:13.956Z"
+          },
+          {
+            "id": 3,
+            "title": "Setup Structured Logger with Strict Stream Separation",
+            "description": "Initialize global logger dispatching info/debug/trace/warn to stderr only, respecting color and verbosity.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Use tracing_subscriber or fern with colog/owo-colors. Stdout reserved exclusively for command output. Stderr gets all logs/spinners. Pure init_logger(config: &LogConfig) -> Result. Check piped stdout (no trailing newline).",
+            "status": "done",
+            "testStrategy": "Capture stderr at levels, assert messages appear/disappear. Pipe test: echo | cargo run, verify stdout clean.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:04:13.958Z"
+          },
+          {
+            "id": 4,
+            "title": "Implement Stdout Command Output Handler",
+            "description": "Create pure function to print ONLY the generated command to stdout, handling piped/no-newline cases.",
+            "dependencies": [
+              1
+            ],
+            "details": "Detect if stdout is piped (!isatty(stdout)). Print command.trim() without newline if piped. Immutable input: fn print_command(cmd: &str, color: &ColorMode, is_piped: bool). No logging interference.",
+            "status": "done",
+            "testStrategy": "Pipe test: cargo run | wc -w matches command word count exactly. TTY vs pipe newline behavior.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:03:15.868Z"
+          },
+          {
+            "id": 5,
+            "title": "Add Locale Awareness and Integrate into Main CLI",
+            "description": "Detect LANG env var for locale-aware messages and wire all components into main() with proper error handling.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "std::env::var(\"LANG\").unwrap_or(\"en_US\"). Parse for message formatting. In main(): parse args → config → init logger → process → print_command. Ensure composable: functions take immutable refs, return Results.",
+            "status": "done",
+            "testStrategy": "LANG=C cargo run, verify date/number formats. Full integration: color+verbosity+pipe+stdout clean.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:03:15.870Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T21:04:13.958Z"
+      },
+      {
+        "id": "7",
+        "title": "Error Handling and Exit Codes",
+        "description": "Comprehensive error handling with specific exit codes per FR-7.",
+        "details": "Custom Error enum: General=1, Usage=2, Config=3, API=4 (network/auth/rate), Safety=5. ? operators + anyhow. Config missing key=3, API fail=4, etc. Stderr: human errors, --v: backtrace.",
+        "testStrategy": "Test each error path: missing arg=2, bad config=3, mock API 401=4, safety reject=5. Assert stderr messages and exact exit codes.",
+        "priority": "medium",
+        "dependencies": [
+          "2",
+          "4",
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Custom Error Enum with Exit Codes",
+            "description": "Create a comprehensive Error enum implementing std::error::Error, Debug, Display, with variants for General=1, Usage=2, Config=3, API=4, Safety=5, each mapping to specific exit codes.",
+            "dependencies": [],
+            "details": "Use #[derive(Debug, thiserror::Error)] with #[error] annotations for human-readable messages. Implement exit_code() method returning u8. Integrate anyhow::Error as source for chaining. Ensure pure function, immutable.",
+            "status": "done",
+            "testStrategy": "Unit test Display impl for each variant, verify exit_code() returns correct values (1-5), test anyhow chaining preserves original error.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:15:06.106Z"
+          },
+          {
+            "id": 2,
+            "title": "Implement Main Error Conversion and Exit Handler",
+            "description": "Create pure main() -> Result<()> using ? operator throughout, convert all anyhow::Error to custom Error at top-level, print to stderr, exit with correct code.",
+            "dependencies": [
+              1
+            ],
+            "details": "In main(), call core logic with .map_err(map_to_custom_error)?, then match final Result: Ok(0), Err(e) => { e.print_stderr(); std::process::exit(e.exit_code()); }. Stderr only for human errors, respect --verbose for backtrace.",
+            "status": "done",
+            "testStrategy": "Integration test: capture exit code and stderr, verify correct code/message per error type, test --v shows backtrace via anyhow chain.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:23:45.066Z"
+          },
+          {
+            "id": 3,
+            "title": "Integrate Error Handling in Config System",
+            "description": "Update Task 2 config parsing to return custom Config error variant (exit=3) for missing keys, invalid TOML, file permission issues, using ? propagation.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "In config load functions, use .with_context(|| \"Failed to load config\")?.map_err(|e| Error::Config { source: e.into() })?, check file perms with std::fs::metadata().permissions(), early return Config error. Pure immutable parsing.",
+            "status": "done",
+            "testStrategy": "Unit tests: missing required key -> exit 3, invalid TOML syntax -> exit 3, unreadable config file -> exit 3 with perm details.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:27:18.276Z"
+          },
+          {
+            "id": 4,
+            "title": "Add Error Handling to AI Provider Abstraction",
+            "description": "Enhance Task 4 Provider trait and OpenRouter impl to propagate API errors (network/auth/rate-limit) as custom API variant (exit=4), using anyhow context.",
+            "dependencies": [
+              1,
+              4
+            ],
+            "details": "In async Provider::generate(), use reqwest::Error .with_context(\"API request failed\")?.map_err(Error::API), distinguish network (reqwest::StatusCode::REQUEST_TIMEOUT), auth (401/403), rate (429). Fallback chain propagates API errors.",
+            "status": "done",
+            "testStrategy": "Mock reqwest responses: 401->API auth error exit 4, 429->API rate error exit 4, timeout->network error exit 4, verify stderr messages.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:39:10.389Z"
+          },
+          {
+            "id": 5,
+            "title": "Implement Safety and Usage Error Handling",
+            "description": "Integrate Task 5 safety checks returning Safety error (exit=5) on user reject/dangerous detection, add Usage error (exit=2) for CLI arg validation, General=1 for unexpected cases.",
+            "dependencies": [
+              1,
+              5
+            ],
+            "details": "In CLI parse/validate: clap errors -> Error::Usage. Safety: user abort -> Error::Safety(\"Command rejected\"). General catch-all: anyhow::anyhow!(\"Unexpected error\"). Use ? in pure validation functions, stderr warn+prompt only on TTY.",
+            "status": "done",
+            "testStrategy": "Test CLI missing arg -> exit 2, safety reject -> exit 5 with message, pipe mode no prompt bypasses to Safety error, --force prevents exit 5.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:42:49.684Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T21:42:49.684Z"
+      },
+      {
+        "id": "8",
+        "title": "Optimizations and Performance",
+        "description": "Apply startup/token optimizations: lazy config, tail history, pre-compile regex, cache system info.",
+        "details": "Lazy: config on first need. History: tail -n 100 | grep via Command. Regex compile once. Sysinfo cache in static Mutex. Benchmark startup <50ms (criterion).",
+        "testStrategy": "Criterion benchmarks before/after. Test large history file: verify tail-read fast (<100ms).",
+        "priority": "medium",
+        "dependencies": [
+          "3",
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Lazy Configuration Loading",
+            "description": "Create a lazy-loaded configuration system that initializes only on first access, integrating with the existing multi-level config hierarchy from Task 2.",
+            "dependencies": [],
+            "details": "Use std::sync::OnceLock or lazy_static to defer config parsing until first get_config() call. Ensure pure function get_config() -> Result<Config> with immutable Config struct. Respect CLI/env/TOML priority, cache result immutably. No global mutable state.",
+            "status": "pending",
+            "testStrategy": "Unit test: verify config None before first access, correct values after with overrides. Integration: mock temp configs, measure parse time <10ms.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Optimize History Loading with Efficient Tail Read",
+            "description": "Replace full history file reads with efficient tail -n 100 | grep implementation using std::process::Command for fast last-N lines extraction.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement pure fn get_recent_history(shell: &str, max_lines: usize) -> Result<String> spawning 'tail -n 100' | 'grep -v ^#' via Command::new(). Parse shell from env::var(\"SHELL\"), fallback to ~/.bash_history. Cache result in OnceLock. Limit to config.max_history lines.",
+            "status": "pending",
+            "testStrategy": "Create large temp history file (>1000 lines), verify reads <100ms and exact N lines returned. Test empty/missing files gracefully.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Pre-compile All Regular Expressions Once",
+            "description": "Identify all regex patterns in the codebase (command extraction, dangerous patterns, etc.) and compile them once at startup into a static Regex cache.",
+            "dependencies": [],
+            "details": "Create static ONCE_LOCK_REGEXES: OnceLock<HashMap<&'static str, Regex>>. Pre-compile patterns from config.dangerous_patterns and command extraction regexes (r##```(?:bash|sh)?\\s*\\n?([\\s\\S]*?)\\n?```##). Expose pure fn regex_match(name: &str, text: &str) -> Option<String>.",
+            "status": "pending",
+            "testStrategy": "Unit tests for each regex pattern with before/after compile time measurement. Verify identical matches post-optimization.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Cache System Information in Static Mutex",
+            "description": "Cache sysinfo data (OS, shell, arch, user) in a static OnceLock to avoid repeated queries during single run, integrating with Task 3 context gathering.",
+            "dependencies": [],
+            "details": "Use OnceLock<SystemInfo> where SystemInfo is immutable struct from sysinfo::System::new(). Implement pure fn get_cached_sysinfo() -> &'static SystemInfo. Call once in main context gathering path. Ensure thread-safe with OnceLock.",
+            "status": "pending",
+            "testStrategy": "Mock sysinfo::System, verify single instantiation per run via counter. Integration test: multiple context calls return same immutable ref.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Benchmark and Verify Startup Performance <50ms",
+            "description": "Add Criterion benchmarks for startup time before/after optimizations and configure release build flags for optimal performance.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Create benches/startup.rs measuring cold startup (main() to first context ready). Add to Cargo.toml: [profile.release] lto=true, codegen-units=1, opt-level=3. Target <50ms median. Profile hot paths with cargo flamegraph if needed. Document build instructions.",
+            "status": "done",
+            "testStrategy": "Criterion: assert(median < 50_000_000ns). Compare before/after runs. Test large history file tail <100ms. Verify UNIX pipe compatibility unchanged.",
+            "parentId": "undefined",
+            "updatedAt": "2026-01-03T21:12:39.366Z"
+          }
+        ],
+        "updatedAt": "2026-01-03T21:12:39.918Z"
+      },
+      {
+        "id": "9",
+        "title": "Shell Completions and Man Page",
+        "description": "Generate completion scripts for bash/zsh/fish/pwsh and man page. Emphasize shell-agnostic completions working across all shells (bash, zsh, fish, PowerShell) since the binary is a standalone executable independent of any specific shell.",
+        "status": "pending",
+        "dependencies": [
+          "1"
+        ],
+        "priority": "low",
+        "details": "clap_completions to generate shell-agnostic completions that work for bash/zsh/fish/pwsh. Binary is standalone executable, no shell-specific dependencies. Build script: completions in /usr/local/share/. Install via cargo install --path .. Support cross-platform builds (Linux, macOS, Windows) for distribution. Man page: generate from clap + custom troff (safety, config).",
+        "testStrategy": "Source completions in shells (bash/zsh/fish/pwsh), test tab-complete flags/subcmds across platforms (Linux/macOS/Windows). Verify man clai renders correctly.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add clap_completions Dependency and Build Script",
+            "description": "Update Cargo.toml to include clap_completions crate and create build.rs to generate completion files for all shells at compile time.",
+            "dependencies": [],
+            "details": "Add clap_completions = '0.5' to [build-dependencies]. In build.rs, use clap::Command::from(App::new()).generate for bash, zsh, fish, pwsh. Output to target-specific dirs like completions/. Ensure cross-compilation compatibility.",
+            "status": "pending",
+            "testStrategy": "Verify build.rs runs without errors: cargo build. Check generated files exist in target/debug/build/.../out/completions/.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Integrate Runtime Completions CLI Option",
+            "description": "Add --completions <SHELL> flag to CLI using clap ArgEnum for bash/zsh/fish/pwsh, generating and printing scripts to stdout when invoked.",
+            "dependencies": [
+              1
+            ],
+            "details": "Define Shell enum with ArgEnum derive. In main(), if completions provided, call shell.generate(app) and exit(0). Use clap_complete::generate() with appropriate shells. Keep pure function for generation logic.",
+            "status": "pending",
+            "testStrategy": "cargo run -- --completions bash > test.sh && source test.sh && test tab completion works. Verify for all 4 shells.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Configure Build Script for Standard Install Paths",
+            "description": "Modify build.rs to install completions to /usr/local/share/<binary>/ and man pages during cargo install, supporting cross-platform paths.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use println!(\"cargo:rerun-if-changed=build.rs\"); detect binary name from clap app. Create dirs like $OUT_DIR/../completions/ and copy files. For Windows use %APPDATA%, macOS ~/Library/. Handle cargo install --path . workflow.",
+            "status": "pending",
+            "testStrategy": "cargo install --path . && ls /usr/local/share/<binary>/ && verify completions dir contains all shell files.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Generate Man Page from Clap with Custom Sections",
+            "description": "Use clap_mangen to generate base man page from CLI app, then extend with custom troff for safety/config details, ensuring proper formatting.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add clap_mangen to build-deps. In build.rs: let manpage_src = generate_manpage(); append custom .TH, .SH SAFETY, .SH CONFIG sections. Output to $OUT_DIR/clai.1. Use immutable string builders for composition.",
+            "status": "pending",
+            "testStrategy": "cargo install && man clai renders correctly. Verify custom sections appear with groff -t -man clai.1 | less.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Add Cross-Platform Distribution and Shell Setup",
+            "description": "Create install script and docs for cross-platform builds (Linux/macOS/Windows), including shell sourcing instructions and verification.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "Build with musl for Linux static binary. Create Makefile/install.sh: cargo build --release --target x86_64-unknown-linux-musl. Copy binary + completions to dist/. Docs: bash: complete -C /path/to/binary_completion binary; zsh/fish/pwsh equiv.",
+            "status": "pending",
+            "testStrategy": "Cross-compile: docker run --rm -v ... rust:1.80 build. Test completions in all shells/platforms via VM/WSL. Verify man page cross-platform with mandoc.",
+            "parentId": "undefined"
+          }
+        ]
+      },
+      {
+        "id": "10",
+        "title": "Integration and E2E Tests",
+        "description": "Integration tests and manual verification covering composability, functional programming principles (pure functions, composability), UNIX philosophy adherence (pipe compatibility, stdout cleanliness, single responsibility), and success metrics.",
+        "status": "pending",
+        "dependencies": [
+          "5",
+          "6",
+          "7"
+        ],
+        "priority": "medium",
+        "details": "Integration tests: Verify pure functions and composability between modules (config parsing -> context gathering -> command execution). UNIX philosophy: Pipe compatibility (e.g., 'wc -l files' | pbcopy), stdout cleanliness (grep -v '^clai$' == empty), single responsibility per component. Manual verification: Simple clai 'ls' -> 'ls' output, interactive safety checks. Accuracy: Manual test 10+ real instructions achieving >85% success. Test interactions with dependencies (config, context, error handling).",
+        "testStrategy": "Focus on integration testing (cargo test --test integration with mocks for AI) and manual verification. Verify module interactions (e.g., config-context-command flow). Test pipe compatibility and stdout cleanliness. Manual E2E flows for UX and accuracy. Real API tests in CI with keys. Shellcheck for completions. Skip TDD/unit emphasis.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Integration Tests for Core Module Flow",
+            "description": "Create integration tests verifying composability between config parsing, context gathering, and command execution modules using mocks for AI provider.",
+            "dependencies": [],
+            "details": "Use Rust's #[cfg(test)] integration tests with cargo test --test integration. Mock dependencies from tasks 2,3,4. Test full flow: parse config -> gather context -> generate/execute command. Assert pure functions return expected immutable outputs without side effects.",
+            "status": "pending",
+            "testStrategy": "Mock AI responses, verify module chaining with assert_eq! on outputs. Run in CI with temp dirs for XDG compliance.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Develop UNIX Pipe Compatibility Tests",
+            "description": "Write tests ensuring the CLI accepts stdin pipes and outputs clean stdout compatible with UNIX tools like wc, grep, pbcopy.",
+            "dependencies": [
+              1
+            ],
+            "details": "Test scenarios: 'echo files | clai', 'wc -l files | clai | pbcopy'. Use assert_cmd crate for process spawning. Verify no extra stderr noise, proper stdin read_to_string() handling, and stdout pipeability.",
+            "status": "pending",
+            "testStrategy": "Spawn subprocesses with pipes, assert stdout matches expected command output. Test non-TTY mode skips prompts.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create Stdout Cleanliness and Single Responsibility Tests",
+            "description": "Implement tests confirming clean stdout (no debug logs, only final command), proper stderr usage, and single responsibility per component.",
+            "dependencies": [
+              1
+            ],
+            "details": "Test: grep -v '^clai$' stdout == empty for non-command output. Verify config module only parses, context only gathers, execution only runs. Use log crate with test filters to ensure no leaks to stdout.",
+            "status": "pending",
+            "testStrategy": "Capture stdout/stderr with assert_cmd, regex check for cleanliness. Modular tests per component boundary.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Build E2E Manual Verification Scripts and Safety Tests",
+            "description": "Develop automated scripts for manual E2E verification of simple commands, interactive safety, error handling, and dependency interactions.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Scripts for: 'clai ls' -> verify 'ls' output, TTY prompts for dangerous cmds, --dry-run/--force flags. Test config-context-command interactions, exit codes (5 for abort). Include 10+ real instruction accuracy checks.",
+            "status": "pending",
+            "testStrategy": "Shell scripts with expect for interactive, cargo test for automated parts. Threshold >85% success on real prompts. Mock stdin for CI.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Establish CI Integration and Success Metrics Reporting",
+            "description": "Set up CI pipeline for running integration/E2E tests with real API keys, generate reports on coverage, accuracy metrics, and UNIX compliance.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Use GitHub Actions/CI with secrets for API keys. Run shellcheck on scripts. Report: test coverage >90%, pipe tests pass, accuracy >85%. Include functional purity checks via no-mutation assertions.",
+            "status": "pending",
+            "testStrategy": "CI matrix for OS/shell variants. Generate JSON reports with pass/fail metrics, flake detection. Retest after fixes.",
+            "parentId": "undefined"
+          }
+        ]
+      },
+      {
+        "id": "11",
+        "title": "Cross-Platform Release System and Binary Distribution",
+        "description": "Implement a comprehensive build and release system to generate statically-linked release binaries for Linux (x86_64, ARM64), macOS (x86_64, ARM64), and Windows (x86_64) using cross-compilation. Create platform-specific install scripts, GitHub Releases workflow, and documentation for seamless single-binary installation across all shells.",
+        "details": "1. **Cross-compilation Setup**: Install `cross` via `cargo install cross`. Configure `.cargo/config.toml` with `[target.*.runner = 'cross']` for all targets: `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`, `x86_64-apple-darwin`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`. Use musl targets for Linux static linking[1][5].\n\n2. **Build Script**: Create `build-release.sh` using `cross build --release --target=<target>` for all 5 targets. Verify static linking with `ldd binary` (should show 'not a dynamic executable')[1]. Strip binaries: `cross strip --target=<target>`.\n\n3. **Install Scripts**: Generate `install.sh` (Linux/macOS): `curl -L https://github.com/.../releases/latest/download/clai-$(uname -m)-$(uname|tr '[:upper:]' '[:lower:]') -o /usr/local/bin/clai && chmod +x /usr/local/bin/clai`. Windows `install.ps1`: PowerShell download+execution. Auto-detect arch[4].\n\n4. **GitHub Actions Workflow**: `.github/workflows/release.yml` triggered on tags `v*`. Build all targets, create assets (`clai-linux-x86_64`, `clai-macos-arm64`, etc.), upload to GitHub Release. Include checksums (sha256sum)[4].\n\n5. **Documentation**: `INSTALL.md` covering: 1) Direct binary (install scripts), 2) `cargo install clai`, 3) Homebrew/Apt formulas template, 4) Windows Chocolatey. Emphasize 'single binary, chmod +x, PATH' workflow[4].\n\n6. **Verification**: Test binaries run on target platforms (QEMU via `cross test` where supported)[5]. Ensure shell-agnostic (works in bash/zsh/fish/pwsh)[1].",
+        "testStrategy": "1. **Build Verification**: Run `build-release.sh`, verify 5 binaries created, `ldd` confirms static (Linux), file types correct (`x86_64 Mach-O`, etc.). Checksums match[1].\n2. **Cross-Platform Testing**: `cross test --target=<target>` for supported targets. Manual test: scp binaries to target machines/VMs (Ubuntu ARM, macOS M1, Windows), verify `./clai --version` works immediately[5].\n3. **Install Scripts**: Test `curl|bash` on clean Ubuntu/Debian/macOS VMs, verify `/usr/local/bin/clai --help` works. Windows: PowerShell execution policy bypass test[4].\n4. **GitHub Release**: Tag `v0.1.0`, verify workflow creates Release with all assets+checksums. Download+test install scripts from release page.\n5. **Documentation**: Shellcheck install scripts, verify all methods documented with copy-paste examples.",
+        "status": "pending",
+        "dependencies": [
+          "1",
+          "9"
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Cross-Compilation Environment",
+            "description": "Install cross-compilation tool and configure Cargo for all target platforms including Linux musl, macOS, and Windows targets.",
+            "dependencies": [],
+            "details": "Run `cargo install cross`. Create/edit `.cargo/config.toml` with `[target.x86_64-unknown-linux-musl.runner='cross']`, `[target.aarch64-unknown-linux-musl.runner='cross']`, `[target.x86_64-apple-darwin.runner='cross']`, `[target.aarch64-apple-darwin.runner='cross']`, `[target.x86_64-pc-windows-msvc.runner='cross']`. Verify with `cross --version`.",
+            "status": "pending",
+            "testStrategy": "Verify config by running `cross build --target x86_64-unknown-linux-musl --release` succeeds without errors.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Implement Build-Release Script",
+            "description": "Create `build-release.sh` script to build, strip, and verify statically-linked binaries for all 5 targets.",
+            "dependencies": [
+              1
+            ],
+            "details": "Script loops over targets: `cross build --release --target=$target`, `cross strip --target=$target`, verify Linux with `ldd target/$target/release/clai` shows 'not a dynamic executable'. Output binaries as `clai-$platform-$arch`. Add checksum generation.",
+            "status": "pending",
+            "testStrategy": "Execute script, confirm 5 binaries created with correct file types/sizes, ldd confirms static linking on Linux targets.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create Platform-Specific Install Scripts",
+            "description": "Develop `install.sh` for Unix-like systems and `install.ps1` for Windows with auto-architecture detection and latest release download.",
+            "dependencies": [
+              2
+            ],
+            "details": "`install.sh`: Use `curl` to fetch `clai-$(uname -m)-$(uname|tr '[:upper:]' '[:lower:]')` from GitHub latest, save to `/usr/local/bin/clai`, `chmod +x`. `install.ps1`: PowerShell equivalent detecting architecture, download, add to PATH if possible.",
+            "status": "pending",
+            "testStrategy": "Test scripts on respective platforms: verify binary downloaded/executable, runs `clai --version` successfully.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Configure GitHub Actions Release Workflow",
+            "description": "Implement `.github/workflows/release.yml` to trigger on `v*` tags, build binaries, compute checksums, and upload to GitHub Release.",
+            "dependencies": [
+              2
+            ],
+            "details": "Use `on: push: tags: 'v*'` trigger. Steps: checkout, setup Rust/cross, run `build-release.sh`, create release with `gh release create`, upload assets like `clai-linux-x86_64`, `*.sha256` checksum files.",
+            "status": "pending",
+            "testStrategy": "Push test tag, verify workflow runs, release created with all 5 binaries + checksums downloadable.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Write Installation Documentation and Verify",
+            "description": "Create `INSTALL.md` with all installation methods and perform cross-platform binary verification using QEMU where supported.",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "Document: 1) install scripts, 2) `cargo install`, 3) Homebrew/Apt/Chocolatey templates, 4) manual binary+PATH. Run `cross test --target=<target>` for supported targets, manual scp tests to real/target machines.",
+            "status": "pending",
+            "testStrategy": "Review doc completeness, test all documented methods work, confirm binaries execute core functionality on each platform/shell.",
+            "parentId": "undefined"
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-01-03T21:42:49.684Z",
+      "taskCount": 11,
+      "completedCount": 8,
+      "tags": [
+        "master"
+      ]
+    }
+  }
+}

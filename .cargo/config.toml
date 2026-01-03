@@ -1,0 +1,29 @@
+# Cargo aliases (simpler alternative to cargo-make)
+# Usage: cargo <alias-name>
+# Example: cargo b, cargo r, cargo t
+
+[alias]
+# Build aliases
+b = "build"
+br = "build --release"
+c = "check"
+
+# Run aliases
+r = "run"
+rr = "run --release"
+
+# Test aliases
+t = "test"
+tt = "test -- --nocapture"
+
+# Linting/formatting
+cl = "clippy -- -D warnings"
+f = "fmt"
+fc = "fmt -- --check"
+
+# Clean
+clean-all = "clean"
+
+# Combined tasks
+lint = "clippy -- -D warnings && cargo fmt -- --check"
+pre-commit = "fmt && clippy -- -D warnings && test"
