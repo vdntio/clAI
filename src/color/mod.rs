@@ -26,7 +26,7 @@ impl ColorMode {
 /// Pure function to detect if colors should be enabled automatically
 /// Checks CLICOLOR, NO_COLOR, TERM=dumb, and TTY status
 /// No side effects - pure function
-/// 
+///
 /// Priority order:
 /// 1. CLICOLOR=0 disables, CLICOLOR=1 enables (GNU standard)
 /// 2. NO_COLOR disables (no-color.org standard)
@@ -168,4 +168,3 @@ mod tests {
         std::env::remove_var("CLICOLOR");
     }
 }
-

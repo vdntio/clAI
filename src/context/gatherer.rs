@@ -21,7 +21,7 @@ pub struct ContextData {
 }
 
 /// Gather all context information and format as structured JSON
-/// 
+///
 /// This is the main orchestrator function that:
 /// 1. Collects system information
 /// 2. Gets current working directory
@@ -30,12 +30,12 @@ pub struct ContextData {
 /// 5. Reads stdin if piped
 /// 6. Applies redaction if configured
 /// 7. Formats everything as pretty-printed JSON
-/// 
+///
 /// Pure function after I/O operations - returns immutable String
-/// 
+///
 /// # Arguments
 /// * `config` - Configuration with context settings (max_files, max_history, redact_paths, etc.)
-/// 
+///
 /// # Returns
 /// * `Result<String>` - Pretty-printed JSON string, or error
 pub fn gather_context(config: &Config) -> Result<String> {
@@ -97,16 +97,15 @@ pub fn gather_context(config: &Config) -> Result<String> {
     format_context_json(&context_data)
 }
 
-
 /// Format context data as pretty-printed JSON
-/// 
+///
 /// Converts ContextData into a structured JSON object with 2-space indentation.
-/// 
+///
 /// Pure function - no side effects
-/// 
+///
 /// # Arguments
 /// * `data` - Context data to format
-/// 
+///
 /// # Returns
 /// * `Result<String>` - Pretty-printed JSON string, or error
 fn format_context_json(data: &ContextData) -> Result<String> {
@@ -126,17 +125,16 @@ fn format_context_json(data: &ContextData) -> Result<String> {
     }
 
     // Pretty-print with 2-space indentation
-    serde_json::to_string_pretty(&json_obj)
-        .context("Failed to serialize context to JSON")
+    serde_json::to_string_pretty(&json_obj).context("Failed to serialize context to JSON")
 }
 
 /// Get context as JSON string (convenience function)
-/// 
+///
 /// Wrapper around gather_context that handles errors gracefully.
-/// 
+///
 /// # Arguments
 /// * `config` - Configuration with context settings
-/// 
+///
 /// # Returns
 /// * `String` - JSON string (empty on error)
 pub fn get_context_json(config: &Config) -> String {
@@ -157,8 +155,8 @@ pub fn get_context_json(config: &Config) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::Value;
     use crate::config::Config;
+    use serde_json::Value;
 
     fn create_test_config() -> Config {
         Config {
@@ -195,10 +193,10 @@ mod tests {
         };
 
         let json_str = format_context_json(&data).unwrap();
-        
+
         // Verify it's valid JSON
         let parsed: Value = serde_json::from_str(&json_str).unwrap();
-        
+
         assert!(parsed.get("system").is_some());
         assert!(parsed.get("cwd").is_some());
         assert!(parsed.get("files").is_some());
@@ -217,25 +215,25 @@ mod tests {
         };
 
         let json_str = format_context_json(&data).unwrap();
-        
+
         // Verify it's valid JSON
         let parsed: Value = serde_json::from_str(&json_str).unwrap();
-        
+
         assert_eq!(parsed.get("stdin").unwrap().as_null(), Some(()));
     }
 
     #[test]
     fn test_gather_context() {
         let config = create_test_config();
-        
+
         // This will actually gather real context
         let result = gather_context(&config);
-        
+
         // Should succeed (unless we're in a weird test environment)
         if let Ok(json_str) = result {
             // Verify it's valid JSON
             let parsed: Value = serde_json::from_str(&json_str).unwrap();
-            
+
             assert!(parsed.get("system").is_some());
             assert!(parsed.get("cwd").is_some());
             assert!(parsed.get("files").is_some());
@@ -247,14 +245,13 @@ mod tests {
     #[test]
     fn test_get_context_json() {
         let config = create_test_config();
-        
+
         // Should always return a string (even on error)
         let json_str = get_context_json(&config);
-        
+
         // Verify it's valid JSON
         let parsed: Value = serde_json::from_str(&json_str).unwrap();
-        
+
         assert!(parsed.get("system").is_some());
     }
 }
-

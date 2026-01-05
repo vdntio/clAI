@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Chat message role
-/// 
+///
 /// Represents the role of a message in a chat conversation.
 /// Used for building chat completion requests.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -16,7 +16,7 @@ pub enum Role {
 }
 
 /// Chat message
-/// 
+///
 /// Immutable message structure for chat completions.
 /// Contains role and content.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -29,13 +29,13 @@ pub struct ChatMessage {
 
 impl ChatMessage {
     /// Create a new chat message
-    /// 
+    ///
     /// Pure function - creates immutable message
-    /// 
+    ///
     /// # Arguments
     /// * `role` - Message role
     /// * `content` - Message content
-    /// 
+    ///
     /// # Returns
     /// * `ChatMessage` - New message instance
     pub fn new(role: Role, content: String) -> Self {
@@ -43,12 +43,12 @@ impl ChatMessage {
     }
 
     /// Create a system message
-    /// 
+    ///
     /// Convenience function for creating system messages
-    /// 
+    ///
     /// # Arguments
     /// * `content` - System message content
-    /// 
+    ///
     /// # Returns
     /// * `ChatMessage` - System message
     pub fn system(content: String) -> Self {
@@ -56,12 +56,12 @@ impl ChatMessage {
     }
 
     /// Create a user message
-    /// 
+    ///
     /// Convenience function for creating user messages
-    /// 
+    ///
     /// # Arguments
     /// * `content` - User message content
-    /// 
+    ///
     /// # Returns
     /// * `ChatMessage` - User message
     pub fn user(content: String) -> Self {
@@ -69,12 +69,12 @@ impl ChatMessage {
     }
 
     /// Create an assistant message
-    /// 
+    ///
     /// Convenience function for creating assistant messages
-    /// 
+    ///
     /// # Arguments
     /// * `content` - Assistant message content
-    /// 
+    ///
     /// # Returns
     /// * `ChatMessage` - Assistant message
     pub fn assistant(content: String) -> Self {
@@ -83,7 +83,7 @@ impl ChatMessage {
 }
 
 /// Chat completion request
-/// 
+///
 /// Immutable request structure for AI chat completions.
 /// Contains messages and optional model/provider selection.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -103,12 +103,12 @@ pub struct ChatRequest {
 
 impl ChatRequest {
     /// Create a new chat request
-    /// 
+    ///
     /// Pure function - creates immutable request
-    /// 
+    ///
     /// # Arguments
     /// * `messages` - List of chat messages
-    /// 
+    ///
     /// # Returns
     /// * `ChatRequest` - New request instance
     pub fn new(messages: Vec<ChatMessage>) -> Self {
@@ -121,12 +121,12 @@ impl ChatRequest {
     }
 
     /// Set the model for this request
-    /// 
+    ///
     /// Returns a new request with the model set.
-    /// 
+    ///
     /// # Arguments
     /// * `model` - Model identifier
-    /// 
+    ///
     /// # Returns
     /// * `ChatRequest` - New request with model set
     pub fn with_model(mut self, model: String) -> Self {
@@ -135,12 +135,12 @@ impl ChatRequest {
     }
 
     /// Set the temperature for this request
-    /// 
+    ///
     /// Returns a new request with the temperature set.
-    /// 
+    ///
     /// # Arguments
     /// * `temperature` - Temperature value (0.0 to 2.0)
-    /// 
+    ///
     /// # Returns
     /// * `ChatRequest` - New request with temperature set
     pub fn with_temperature(mut self, temperature: f64) -> Self {
@@ -149,12 +149,12 @@ impl ChatRequest {
     }
 
     /// Set the max tokens for this request
-    /// 
+    ///
     /// Returns a new request with max_tokens set.
-    /// 
+    ///
     /// # Arguments
     /// * `max_tokens` - Maximum tokens in response
-    /// 
+    ///
     /// # Returns
     /// * `ChatRequest` - New request with max_tokens set
     pub fn with_max_tokens(mut self, max_tokens: u32) -> Self {
@@ -164,7 +164,7 @@ impl ChatRequest {
 }
 
 /// Chat completion response
-/// 
+///
 /// Immutable response structure from AI providers.
 /// Contains the generated message content.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -178,7 +178,7 @@ pub struct ChatResponse {
 }
 
 /// Token usage statistics
-/// 
+///
 /// Represents token usage for a completion request.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Usage {
@@ -192,12 +192,12 @@ pub struct Usage {
 
 impl ChatResponse {
     /// Create a new chat response
-    /// 
+    ///
     /// Pure function - creates immutable response
-    /// 
+    ///
     /// # Arguments
     /// * `content` - Generated message content
-    /// 
+    ///
     /// # Returns
     /// * `ChatResponse` - New response instance
     pub fn new(content: String) -> Self {
@@ -209,12 +209,12 @@ impl ChatResponse {
     }
 
     /// Set the model for this response
-    /// 
+    ///
     /// Returns a new response with the model set.
-    /// 
+    ///
     /// # Arguments
     /// * `model` - Model identifier
-    /// 
+    ///
     /// # Returns
     /// * `ChatResponse` - New response with model set
     pub fn with_model(mut self, model: String) -> Self {
@@ -223,12 +223,12 @@ impl ChatResponse {
     }
 
     /// Set the usage statistics for this response
-    /// 
+    ///
     /// Returns a new response with usage set.
-    /// 
+    ///
     /// # Arguments
     /// * `usage` - Usage statistics
-    /// 
+    ///
     /// # Returns
     /// * `ChatResponse` - New response with usage set
     pub fn with_usage(mut self, usage: Usage) -> Self {
@@ -325,4 +325,3 @@ mod tests {
         assert_eq!(msg, deserialized);
     }
 }
-

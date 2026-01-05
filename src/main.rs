@@ -5,10 +5,10 @@ use clai::error::ClaiError;
 use clai::logging::Logger;
 use clai::output::print_command;
 use clai::safety::{
-    execute_command, handle_dangerous_confirmation, is_dangerous_command,
-    prompt_command_action, should_prompt, CommandAction, Decision,
+    execute_command, handle_dangerous_confirmation, is_dangerous_command, prompt_command_action,
+    should_prompt, CommandAction, Decision,
 };
-use clai::signals::{is_interrupted, is_interactive, setup_signal_handlers, ExitCode};
+use clai::signals::{is_interactive, is_interrupted, setup_signal_handlers, ExitCode};
 use regex::Regex;
 use std::process;
 use std::sync::Arc;
@@ -16,7 +16,7 @@ use std::sync::Arc;
 /// Main entry point - orchestrates pure function composition
 /// I/O side effects are isolated to this function
 /// Signal handling and exit codes follow UNIX conventions
-/// 
+///
 /// Uses Result-based error handling with ClaiError for proper exit codes
 #[tokio::main]
 async fn main() {
@@ -42,10 +42,8 @@ async fn main() {
         Err(err) => {
             // Get verbosity level from parsed CLI args
             // Parse args again just to get verbosity (lightweight operation)
-            let verbose = parse_args()
-                .map(|cli| cli.verbose)
-                .unwrap_or(0);
-            
+            let verbose = parse_args().map(|cli| cli.verbose).unwrap_or(0);
+
             // Print error to stderr with optional backtrace
             err.print_stderr(verbose);
             process::exit(err.exit_code() as i32);
@@ -54,15 +52,14 @@ async fn main() {
 }
 
 /// Extract HTTP status code from error message
-/// 
+///
 /// Looks for patterns like "(401)", "(429)", etc. in error messages
 /// Returns the status code if found, None otherwise
 fn extract_status_code(error_msg: &str) -> Option<u16> {
     // Pattern: "(401)", "(429)", etc.
-    static STATUS_CODE_RE: once_cell::sync::Lazy<Regex> = once_cell::sync::Lazy::new(|| {
-        Regex::new(r"\((\d{3})\)").unwrap()
-    });
-    
+    static STATUS_CODE_RE: once_cell::sync::Lazy<Regex> =
+        once_cell::sync::Lazy::new(|| Regex::new(r"\((\d{3})\)").unwrap());
+
     STATUS_CODE_RE
         .captures(error_msg)
         .and_then(|caps| caps.get(1))
@@ -70,7 +67,7 @@ fn extract_status_code(error_msg: &str) -> Option<u16> {
 }
 
 /// Core main logic with Result-based error handling
-/// 
+///
 /// Returns Result<(), ClaiError> for proper error propagation
 async fn run_main(interrupt_flag: &Arc<std::sync::atomic::AtomicBool>) -> Result<(), ClaiError> {
     // Parse CLI arguments - convert clap::Error to ClaiError::Usage
@@ -124,7 +121,7 @@ async fn run_main(interrupt_flag: &Arc<std::sync::atomic::AtomicBool>) -> Result
 /// Strict stdout/stderr separation: stdout = commands only, stderr = logs/warnings
 /// Checks for signal interruption during execution
 /// Integrates safety checks for dangerous commands
-/// 
+///
 /// Converts errors to appropriate ClaiError variants:
 /// - AI/API errors -> ClaiError::API
 /// - Safety rejections -> ClaiError::Safety
@@ -165,16 +162,15 @@ async fn handle_cli(
 
     // Generate commands - convert AI errors to ClaiError::API
     // Extract HTTP status code from error message if available
-    let commands = commands_result
-        .map_err(|e| {
-            let error_str = e.to_string();
-            let status_code = extract_status_code(&error_str);
-            
-            ClaiError::API {
-                source: anyhow::Error::from(e).context("Failed to generate command from AI provider"),
-                status_code,
-            }
-        })?;
+    let commands = commands_result.map_err(|e| {
+        let error_str = e.to_string();
+        let status_code = extract_status_code(&error_str);
+
+        ClaiError::API {
+            source: anyhow::Error::from(e).context("Failed to generate command from AI provider"),
+            status_code,
+        }
+    })?;
 
     // Check for interruption before output
     if is_interrupted(interrupt_flag) {
@@ -185,123 +181,149 @@ async fn handle_cli(
     // Get first command for non-interactive modes
     let first_command = commands.first().cloned().unwrap_or_default();
 
-            // Handle --dry-run flag: always print and exit (bypass safety checks)
-            if config.dry_run {
-                // Main output to stdout ONLY (clean for piping)
-                // For dry-run, output all commands (one per line)
-                // Use print_command for proper piped handling
-                for (i, cmd) in commands.iter().enumerate() {
-                    if i > 0 {
-                        // Add newline between commands when multiple
-                        print!("\n");
-                    }
-                    print_command(cmd)
-                        .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
-                }
-                // Ensure final newline for dry-run (user-friendly)
-                if !commands.is_empty() {
-                    println!();
-                }
-                return Ok(());
+    // Handle --dry-run flag: always print and exit (bypass safety checks)
+    if config.dry_run {
+        // Main output to stdout ONLY (clean for piping)
+        // For dry-run, output all commands (one per line)
+        // Use print_command for proper piped handling
+        for (i, cmd) in commands.iter().enumerate() {
+            if i > 0 {
+                // Add newline between commands when multiple
+                print!("\n");
             }
+            print_command(cmd).map_err(|e| {
+                ClaiError::General(
+                    anyhow::Error::from(e).context("Failed to write command to stdout"),
+                )
+            })?;
+        }
+        // Ensure final newline for dry-run (user-friendly)
+        if !commands.is_empty() {
+            println!();
+        }
+        return Ok(());
+    }
 
-            // Check if first command is dangerous (for safety flow)
-            let is_dangerous = is_dangerous_command(&first_command, &file_config);
+    // Check if first command is dangerous (for safety flow)
+    let is_dangerous = is_dangerous_command(&first_command, &file_config);
 
-            // Check if we're in interactive mode (TTY + interactive flag)
-            let is_interactive_mode = config.interactive && is_interactive();
+    // Check if we're in interactive mode (TTY + interactive flag)
+    let is_interactive_mode = config.interactive && is_interactive();
 
-            // Handle dangerous commands
-            if is_dangerous {
-                // Check if we should prompt (TTY + config enabled + not forced)
-                let should_prompt_user = should_prompt(
-                    &clai::cli::Cli {
-                        instruction: config.instruction.clone(),
-                        model: config.model.clone(),
-                        provider: config.provider.clone(),
-                        quiet: config.quiet,
-                        verbose: config.verbose,
-                        no_color: config.no_color,
-                        color: config.color,
-                        interactive: config.interactive,
-                        force: config.force,
-                        dry_run: config.dry_run,
-                        context: config.context.clone(),
-                        offline: config.offline,
-                        num_options: config.num_options,
-                        debug: config.debug,
-                    },
-                    &file_config,
-                );
+    // Handle dangerous commands
+    if is_dangerous {
+        // Check if we should prompt (TTY + config enabled + not forced)
+        let should_prompt_user = should_prompt(
+            &clai::cli::Cli {
+                instruction: config.instruction.clone(),
+                model: config.model.clone(),
+                provider: config.provider.clone(),
+                quiet: config.quiet,
+                verbose: config.verbose,
+                no_color: config.no_color,
+                color: config.color,
+                interactive: config.interactive,
+                force: config.force,
+                dry_run: config.dry_run,
+                context: config.context.clone(),
+                offline: config.offline,
+                num_options: config.num_options,
+                debug: config.debug,
+            },
+            &file_config,
+        );
 
-                if should_prompt_user {
-                    // Prompt user for confirmation (dangerous command)
-                    // Use first command for dangerous prompt (safety takes priority)
-                    match handle_dangerous_confirmation(&first_command, &config) {
-                        Ok(Decision::Execute) => {
-                            // User chose to execute - print to stdout
-                            print_command(&first_command)
-                                .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
-                            Ok(())
-                        }
-                        Ok(Decision::Copy) => {
-                            // User chose to copy - print to stdout (clipboard support can be added later)
-                            print_command(&first_command)
-                                .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
-                            Ok(())
-                        }
-                        Ok(Decision::Abort) => {
-                            // User chose to abort - return Safety error
-                            Err(ClaiError::Safety("Command rejected by user".to_string()))
-                        }
-                        Err(e) => {
-                            // Error during confirmation (e.g., EOF) - default to abort
-                            Err(ClaiError::Safety(format!("Error during confirmation: {}. Command rejected.", e)))
-                        }
-                    }
-                } else {
-                    // Not prompting (piped, force, or config disabled) - print to stdout
-                    // Following UNIX philosophy: when piped, output goes to stdout
-                    print_command(&first_command)
-                        .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
+        if should_prompt_user {
+            // Prompt user for confirmation (dangerous command)
+            // Use first command for dangerous prompt (safety takes priority)
+            match handle_dangerous_confirmation(&first_command, &config) {
+                Ok(Decision::Execute) => {
+                    // User chose to execute - print to stdout
+                    print_command(&first_command).map_err(|e| {
+                        ClaiError::General(
+                            anyhow::Error::from(e).context("Failed to write command to stdout"),
+                        )
+                    })?;
                     Ok(())
                 }
-            } else if is_interactive_mode {
-                // Safe command(s) in interactive mode - prompt for action with Tab cycling
-                match prompt_command_action(&commands, &config) {
-                    Ok((CommandAction::Execute, selected_command)) => {
-                        // User pressed Enter - execute the selected command
-                        let exit_code = execute_command(&selected_command)
-                            .map_err(|e| ClaiError::General(anyhow::Error::msg(e).context("Failed to execute command")))?;
-                        
-                        if exit_code == 0 {
-                            Ok(())
-                        } else {
-                            Err(ClaiError::General(anyhow::anyhow!("Command exited with code {}", exit_code)))
-                        }
-                    }
-                    Ok((CommandAction::Output, selected_command)) => {
-                        // User chose to output - print to stdout (they can edit/run manually)
-                        print_command(&selected_command)
-                            .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
-                        Ok(())
-                    }
-                    Ok((CommandAction::Abort, _)) => {
-                        // User chose to abort (Ctrl+C or Esc)
-                        Err(ClaiError::Safety("Command rejected by user".to_string()))
-                    }
-                    Err(e) => {
-                        // Error during prompt (e.g., not TTY) - default to output first
-                        eprintln!("Warning: {}. Outputting command.", e);
-                        print_command(&first_command)
-                            .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
-                        Ok(())
-                    }
+                Ok(Decision::Copy) => {
+                    // User chose to copy - print to stdout (clipboard support can be added later)
+                    print_command(&first_command).map_err(|e| {
+                        ClaiError::General(
+                            anyhow::Error::from(e).context("Failed to write command to stdout"),
+                        )
+                    })?;
+                    Ok(())
                 }
-            } else {
-                // Command is safe and not interactive - print first command to stdout
-                print_command(&first_command)
-                    .map_err(|e| ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout")))?;
+                Ok(Decision::Abort) => {
+                    // User chose to abort - return Safety error
+                    Err(ClaiError::Safety("Command rejected by user".to_string()))
+                }
+                Err(e) => {
+                    // Error during confirmation (e.g., EOF) - default to abort
+                    Err(ClaiError::Safety(format!(
+                        "Error during confirmation: {}. Command rejected.",
+                        e
+                    )))
+                }
+            }
+        } else {
+            // Not prompting (piped, force, or config disabled) - print to stdout
+            // Following UNIX philosophy: when piped, output goes to stdout
+            print_command(&first_command).map_err(|e| {
+                ClaiError::General(
+                    anyhow::Error::from(e).context("Failed to write command to stdout"),
+                )
+            })?;
+            Ok(())
+        }
+    } else if is_interactive_mode {
+        // Safe command(s) in interactive mode - prompt for action with Tab cycling
+        match prompt_command_action(&commands, &config) {
+            Ok((CommandAction::Execute, selected_command)) => {
+                // User pressed Enter - execute the selected command
+                let exit_code = execute_command(&selected_command).map_err(|e| {
+                    ClaiError::General(anyhow::Error::msg(e).context("Failed to execute command"))
+                })?;
+
+                if exit_code == 0 {
+                    Ok(())
+                } else {
+                    Err(ClaiError::General(anyhow::anyhow!(
+                        "Command exited with code {}",
+                        exit_code
+                    )))
+                }
+            }
+            Ok((CommandAction::Output, selected_command)) => {
+                // User chose to output - print to stdout (they can edit/run manually)
+                print_command(&selected_command).map_err(|e| {
+                    ClaiError::General(
+                        anyhow::Error::from(e).context("Failed to write command to stdout"),
+                    )
+                })?;
                 Ok(())
             }
+            Ok((CommandAction::Abort, _)) => {
+                // User chose to abort (Ctrl+C or Esc)
+                Err(ClaiError::Safety("Command rejected by user".to_string()))
+            }
+            Err(e) => {
+                // Error during prompt (e.g., not TTY) - default to output first
+                eprintln!("Warning: {}. Outputting command.", e);
+                print_command(&first_command).map_err(|e| {
+                    ClaiError::General(
+                        anyhow::Error::from(e).context("Failed to write command to stdout"),
+                    )
+                })?;
+                Ok(())
+            }
+        }
+    } else {
+        // Command is safe and not interactive - print first command to stdout
+        print_command(&first_command).map_err(|e| {
+            ClaiError::General(anyhow::Error::from(e).context("Failed to write command to stdout"))
+        })?;
+        Ok(())
+    }
 }

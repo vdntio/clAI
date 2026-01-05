@@ -1,35 +1,36 @@
 use crate::ai::chain::ProviderChain;
+use crate::ai::prompt::{
+    build_chat_request, build_multi_chat_request, build_prompt, extract_command, extract_commands,
+};
 use crate::ai::provider::Provider;
-use crate::ai::prompt::{build_chat_request, build_multi_chat_request, build_prompt, extract_command, extract_commands};
 use crate::config::{get_file_config, Config};
 use crate::context::gatherer::gather_context;
 use anyhow::{Context, Result};
 
 /// Build context and prompt from configuration
-/// 
+///
 /// Shared helper that gathers context and builds the prompt string.
 /// Pure function after I/O operations.
-/// 
+///
 /// # Arguments
 /// * `config` - Runtime configuration
-/// 
+///
 /// # Returns
 /// * `Result<String>` - Built prompt string or error
 fn build_context_prompt(config: &Config) -> Result<String> {
     // Gather context
-    let context_json = gather_context(config)
-        .context("Failed to gather context")?;
+    let context_json = gather_context(config).context("Failed to gather context")?;
 
     // Parse context JSON to extract components
-    let context: serde_json::Value = serde_json::from_str(&context_json)
-        .context("Failed to parse context JSON")?;
+    let context: serde_json::Value =
+        serde_json::from_str(&context_json).context("Failed to parse context JSON")?;
 
     // Extract components from context
     let system_context = context
         .get("system")
         .map(|s| serde_json::to_string(s).unwrap_or_default())
         .unwrap_or_default();
-    
+
     let dir_context = format!(
         "Current directory: {}\nFiles: {}",
         context.get("cwd").and_then(|c| c.as_str()).unwrap_or(""),
@@ -57,12 +58,7 @@ fn build_context_prompt(config: &Config) -> Result<String> {
         .map(|s| format!("Stdin input: {}", s));
 
     // Build prompt
-    let mut prompt = build_prompt(
-        &system_context,
-        &dir_context,
-        &history,
-        &config.instruction,
-    );
+    let mut prompt = build_prompt(&system_context, &dir_context, &history, &config.instruction);
 
     // Add stdin context if present
     if let Some(stdin) = stdin_context {
@@ -73,12 +69,12 @@ fn build_context_prompt(config: &Config) -> Result<String> {
 }
 
 /// Create provider chain from configuration
-/// 
+///
 /// Helper that creates the AI provider chain with proper model parsing.
-/// 
+///
 /// # Arguments
 /// * `config` - Runtime configuration
-/// 
+///
 /// # Returns
 /// * `(ProviderChain, Option<String>)` - Provider chain and parsed model
 fn create_provider_chain(config: &Config) -> (ProviderChain, Option<String>) {
@@ -121,19 +117,19 @@ fn create_provider_chain(config: &Config) -> (ProviderChain, Option<String>) {
 }
 
 /// Handle AI command generation (single command)
-/// 
+///
 /// Orchestrates the full flow:
 /// 1. Gather context (system, directory, history, stdin)
 /// 2. Build prompt from context and instruction
 /// 3. Create chat request
 /// 4. Call provider chain
 /// 5. Extract command from response
-/// 
+///
 /// Pure function after I/O operations - returns immutable String
-/// 
+///
 /// # Arguments
 /// * `config` - Runtime configuration
-/// 
+///
 /// # Returns
 /// * `Result<String>` - Generated command or error
 pub async fn generate_command(config: &Config) -> Result<String> {
@@ -173,21 +169,21 @@ pub async fn generate_command(config: &Config) -> Result<String> {
 }
 
 /// Handle AI command generation (multiple options)
-/// 
+///
 /// Orchestrates the full flow for generating multiple command alternatives:
 /// 1. Gather context (system, directory, history, stdin)
 /// 2. Build prompt from context and instruction
 /// 3. Create multi-command chat request (requests JSON array response)
 /// 4. Call provider chain
 /// 5. Parse JSON response to extract commands
-/// 
+///
 /// Falls back to single command extraction if JSON parsing fails.
-/// 
+///
 /// Pure function after I/O operations - returns immutable Vec<String>
-/// 
+///
 /// # Arguments
 /// * `config` - Runtime configuration
-/// 
+///
 /// # Returns
 /// * `Result<Vec<String>>` - Generated commands or error
 pub async fn generate_commands(config: &Config) -> Result<Vec<String>> {

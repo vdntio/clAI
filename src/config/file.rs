@@ -224,19 +224,22 @@ mod tests {
     #[test]
     fn test_config_serialize_deserialize() {
         let config = FileConfig::default();
-        
+
         // Serialize to TOML
         let toml_string = toml::to_string(&config).expect("Failed to serialize config");
-        
+
         // Deserialize back
-        let deserialized: FileConfig = toml::from_str(&toml_string)
-            .expect("Failed to deserialize config");
-        
+        let deserialized: FileConfig =
+            toml::from_str(&toml_string).expect("Failed to deserialize config");
+
         // Verify values match
         assert_eq!(config.provider.default, deserialized.provider.default);
         assert_eq!(config.context.max_files, deserialized.context.max_files);
         assert_eq!(config.context.max_history, deserialized.context.max_history);
-        assert_eq!(config.safety.dangerous_patterns, deserialized.safety.dangerous_patterns);
+        assert_eq!(
+            config.safety.dangerous_patterns,
+            deserialized.safety.dangerous_patterns
+        );
         assert_eq!(config.ui.color, deserialized.ui.color);
     }
 
@@ -244,7 +247,7 @@ mod tests {
     fn test_config_clone() {
         let config1 = FileConfig::default();
         let config2 = config1.clone();
-        
+
         // Verify clone creates identical copy
         assert_eq!(config1, config2);
     }
@@ -253,7 +256,7 @@ mod tests {
     fn test_dangerous_patterns_default() {
         let config = FileConfig::default();
         let patterns = &config.safety.dangerous_patterns;
-        
+
         assert!(patterns.contains(&"rm -rf".to_string()));
         assert!(patterns.contains(&"sudo rm".to_string()));
         assert!(patterns.contains(&"mkfs".to_string()));
@@ -262,4 +265,3 @@ mod tests {
         assert!(patterns.contains(&"format".to_string()));
     }
 }
-

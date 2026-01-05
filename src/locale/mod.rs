@@ -1,31 +1,30 @@
 /// Locale detection and formatting utilities
-/// 
+///
 /// Provides locale-aware formatting for dates, numbers, and messages.
 /// Detects locale from LANG environment variable.
 
 /// Get the current locale from environment
-/// 
+///
 /// Returns the locale string (e.g., "en_US.UTF-8", "C", "fr_FR")
 /// Defaults to "en_US" if LANG is not set.
-/// 
+///
 /// Pure function - no side effects
 pub fn get_locale() -> String {
-    std::env::var("LANG")
-        .unwrap_or_else(|_| "en_US".to_string())
+    std::env::var("LANG").unwrap_or_else(|_| "en_US".to_string())
 }
 
 /// Get the locale language code (e.g., "en", "fr", "de")
-/// 
+///
 /// Extracts the language part from locale string.
 /// Examples:
 /// - "en_US.UTF-8" -> "en"
 /// - "fr_FR" -> "fr"
 /// - "C" -> "C"
-/// 
+///
 /// Pure function - no side effects
 pub fn get_language_code() -> String {
     let locale = get_locale();
-    
+
     // Extract language code (first part before underscore or dot)
     locale
         .split('_')
@@ -38,9 +37,9 @@ pub fn get_language_code() -> String {
 }
 
 /// Check if locale is set to C (POSIX locale)
-/// 
+///
 /// The C locale typically means no locale-specific formatting.
-/// 
+///
 /// Pure function - no side effects
 pub fn is_c_locale() -> bool {
     let locale = get_locale();
@@ -90,4 +89,3 @@ mod tests {
         assert_eq!(locale, "en_US");
     }
 }
-

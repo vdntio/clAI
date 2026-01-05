@@ -12,7 +12,7 @@ const OPENROUTER_API_URL: &str = "https://openrouter.ai/api/v1/chat/completions"
 const DEFAULT_OPENROUTER_MODEL: &str = "qwen/qwen3-coder";
 
 /// OpenRouter provider implementation
-/// 
+///
 /// Implements the Provider trait for OpenRouter API.
 /// Uses OpenAI-compatible request/response format.
 #[derive(Debug, Clone)]
@@ -27,11 +27,11 @@ pub struct OpenRouterProvider {
 
 impl OpenRouterProvider {
     /// Create a new OpenRouter provider
-    /// 
+    ///
     /// # Arguments
     /// * `api_key` - OpenRouter API key
     /// * `default_model` - Optional default model identifier
-    /// 
+    ///
     /// # Returns
     /// * `OpenRouterProvider` - New provider instance
     pub fn new(api_key: String, default_model: Option<String>) -> Self {
@@ -48,9 +48,9 @@ impl OpenRouterProvider {
     }
 
     /// Get API key from environment or config
-    /// 
+    ///
     /// Checks for OPENROUTER_API_KEY environment variable.
-    /// 
+    ///
     /// # Returns
     /// * `Option<String>` - API key if found
     pub fn api_key_from_env() -> Option<String> {
@@ -92,10 +92,7 @@ impl OpenRouterProvider {
     }
 
     /// Make API request with retry logic for rate limits
-    async fn make_request_with_retry(
-        &self,
-        request: OpenAIRequest,
-    ) -> Result<OpenAIResponse> {
+    async fn make_request_with_retry(&self, request: OpenAIRequest) -> Result<OpenAIResponse> {
         let mut retries = 3;
         let mut delay = Duration::from_secs(1);
 
@@ -122,10 +119,22 @@ impl OpenRouterProvider {
         {
             use std::fs::OpenOptions;
             use std::io::Write;
-            if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                let _ = writeln!(file, r#"{{"id":"openrouter_before_request","timestamp":{},"location":"openrouter.rs:121","message":"About to send HTTP request","data":{{"model":"{}","url":"{}","has_api_key":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#, 
-                    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                    request.model, OPENROUTER_API_URL, !self.api_key.is_empty());
+            if let Ok(mut file) = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open("/home/vee/Coding/clAI/.cursor/debug.log")
+            {
+                let _ = writeln!(
+                    file,
+                    r#"{{"id":"openrouter_before_request","timestamp":{},"location":"openrouter.rs:121","message":"About to send HTTP request","data":{{"model":"{}","url":"{}","has_api_key":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis(),
+                    request.model,
+                    OPENROUTER_API_URL,
+                    !self.api_key.is_empty()
+                );
             }
         }
         // #endregion
@@ -145,10 +154,20 @@ impl OpenRouterProvider {
                 {
                     use std::fs::OpenOptions;
                     use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                        let _ = writeln!(file, r#"{{"id":"openrouter_request_sent","timestamp":{},"location":"openrouter.rs:129","message":"HTTP request sent successfully","data":{{"status":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#, 
-                            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                            r.status().as_u16());
+                    if let Ok(mut file) = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
+                    {
+                        let _ = writeln!(
+                            file,
+                            r#"{{"id":"openrouter_request_sent","timestamp":{},"location":"openrouter.rs:129","message":"HTTP request sent successfully","data":{{"status":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_millis(),
+                            r.status().as_u16()
+                        );
                     }
                 }
                 // #endregion
@@ -159,16 +178,29 @@ impl OpenRouterProvider {
                 {
                     use std::fs::OpenOptions;
                     use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                        let _ = writeln!(file, r#"{{"id":"openrouter_request_error","timestamp":{},"location":"openrouter.rs:129","message":"HTTP request failed","data":{{"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#, 
-                            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                            e.to_string().replace('"', "\\\""));
+                    if let Ok(mut file) = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
+                    {
+                        let _ = writeln!(
+                            file,
+                            r#"{{"id":"openrouter_request_error","timestamp":{},"location":"openrouter.rs:129","message":"HTTP request failed","data":{{"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_millis(),
+                            e.to_string().replace('"', "\\\"")
+                        );
                     }
                 }
                 // #endregion
                 // Network/timeout errors - no status code
-                return Err(anyhow::anyhow!("Network error: Failed to send request to OpenRouter: {}", e)
-                    .context("API request failed"));
+                return Err(anyhow::anyhow!(
+                    "Network error: Failed to send request to OpenRouter: {}",
+                    e
+                )
+                .context("API request failed"));
             }
         };
 
@@ -177,10 +209,20 @@ impl OpenRouterProvider {
         {
             use std::fs::OpenOptions;
             use std::io::Write;
-            if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                let _ = writeln!(file, r#"{{"id":"openrouter_response_status","timestamp":{},"location":"openrouter.rs:165","message":"Received HTTP response","data":{{"status":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B,C"}}"#, 
-                    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                    status.as_u16());
+            if let Ok(mut file) = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open("/home/vee/Coding/clAI/.cursor/debug.log")
+            {
+                let _ = writeln!(
+                    file,
+                    r#"{{"id":"openrouter_response_status","timestamp":{},"location":"openrouter.rs:165","message":"Received HTTP response","data":{{"status":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B,C"}}"#,
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis(),
+                    status.as_u16()
+                );
             }
         }
         // #endregion
@@ -191,22 +233,46 @@ impl OpenRouterProvider {
             {
                 use std::fs::OpenOptions;
                 use std::io::Write;
-                if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                    let _ = writeln!(file, r#"{{"id":"openrouter_api_error","timestamp":{},"location":"openrouter.rs:167","message":"OpenRouter API returned error","data":{{"status":{},"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#, 
-                        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                        status_code, error_text.replace('"', "\\\"").chars().take(200).collect::<String>());
+                if let Ok(mut file) = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open("/home/vee/Coding/clAI/.cursor/debug.log")
+                {
+                    let _ = writeln!(
+                        file,
+                        r#"{{"id":"openrouter_api_error","timestamp":{},"location":"openrouter.rs:167","message":"OpenRouter API returned error","data":{{"status":{},"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
+                        std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap()
+                            .as_millis(),
+                        status_code,
+                        error_text
+                            .replace('"', "\\\"")
+                            .chars()
+                            .take(200)
+                            .collect::<String>()
+                    );
                 }
             }
             // #endregion
-            
+
             // Distinguish error types for better error messages
             let error_msg = match status_code {
-                401 | 403 => format!("Authentication error ({}): Invalid or missing API key. {}", status_code, error_text),
-                429 => format!("Rate limit error ({}): Too many requests. {}", status_code, error_text),
-                408 | 504 => format!("Timeout error ({}): Request timed out. {}", status_code, error_text),
+                401 | 403 => format!(
+                    "Authentication error ({}): Invalid or missing API key. {}",
+                    status_code, error_text
+                ),
+                429 => format!(
+                    "Rate limit error ({}): Too many requests. {}",
+                    status_code, error_text
+                ),
+                408 | 504 => format!(
+                    "Timeout error ({}): Request timed out. {}",
+                    status_code, error_text
+                ),
                 _ => format!("API error ({}): {}", status_code, error_text),
             };
-            
+
             anyhow::bail!("{}", error_msg);
         }
 
@@ -216,10 +282,20 @@ impl OpenRouterProvider {
                 {
                     use std::fs::OpenOptions;
                     use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                        let _ = writeln!(file, r#"{{"id":"openrouter_parse_success","timestamp":{},"location":"openrouter.rs:180","message":"Response parsed successfully","data":{{"choices":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}}"#, 
-                            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                            r.choices.len());
+                    if let Ok(mut file) = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
+                    {
+                        let _ = writeln!(
+                            file,
+                            r#"{{"id":"openrouter_parse_success","timestamp":{},"location":"openrouter.rs:180","message":"Response parsed successfully","data":{{"choices":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}}"#,
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_millis(),
+                            r.choices.len()
+                        );
                     }
                 }
                 // #endregion
@@ -230,14 +306,27 @@ impl OpenRouterProvider {
                 {
                     use std::fs::OpenOptions;
                     use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/vee/Coding/clAI/.cursor/debug.log") {
-                        let _ = writeln!(file, r#"{{"id":"openrouter_parse_error","timestamp":{},"location":"openrouter.rs:180","message":"Failed to parse response","data":{{"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}}"#, 
-                            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-                            e.to_string().replace('"', "\\\""));
+                    if let Ok(mut file) = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
+                    {
+                        let _ = writeln!(
+                            file,
+                            r#"{{"id":"openrouter_parse_error","timestamp":{},"location":"openrouter.rs:180","message":"Failed to parse response","data":{{"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}}"#,
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_millis(),
+                            e.to_string().replace('"', "\\\"")
+                        );
                     }
                 }
                 // #endregion
-                return Err(anyhow::anyhow!("Failed to parse OpenRouter response: {}", e));
+                return Err(anyhow::anyhow!(
+                    "Failed to parse OpenRouter response: {}",
+                    e
+                ));
             }
         };
 
@@ -381,4 +470,3 @@ mod tests {
         assert!(resp.usage.is_some());
     }
 }
-

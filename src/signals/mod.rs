@@ -116,7 +116,10 @@ mod tests {
         // Pure function - same input (environment), same output
         let result1 = is_interactive();
         let result2 = is_interactive();
-        assert_eq!(result1, result2, "Interactive detection should be consistent");
+        assert_eq!(
+            result1, result2,
+            "Interactive detection should be consistent"
+        );
     }
 
     #[test]
@@ -127,4 +130,3 @@ mod tests {
         assert_eq!(result1, result2, "Pipe detection should be consistent");
     }
 }
-

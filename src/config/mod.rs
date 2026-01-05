@@ -29,7 +29,7 @@ impl Config {
     pub fn from_cli(cli: Cli) -> Self {
         // Clamp num_options between 1 and 10
         let num_options = cli.num_options.clamp(1, 10);
-        
+
         // If --no-color is set, override color to Never
         // Otherwise use the --color flag value
         let color = if cli.no_color {
@@ -37,7 +37,7 @@ impl Config {
         } else {
             cli.color
         };
-        
+
         Self {
             instruction: cli.instruction,
             model: cli.model,
@@ -103,7 +103,7 @@ mod tests {
 
         // Verify immutability - both configs should be equal
         assert_eq!(config1, config2);
-        
+
         // Verify all fields are correctly transformed
         assert_eq!(config1.instruction, "test");
         assert_eq!(config1.model, Some("test-model".to_string()));
@@ -181,4 +181,3 @@ mod tests {
         assert_eq!(config.num_options, 10); // Clamped to maximum 10
     }
 }
-

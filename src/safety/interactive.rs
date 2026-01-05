@@ -36,7 +36,9 @@ impl std::fmt::Display for InteractiveError {
         match self {
             InteractiveError::Eof => write!(f, "EOF: stdin closed or piped"),
             InteractiveError::IoError(msg) => write!(f, "I/O error: {}", msg),
-            InteractiveError::NotTty => write!(f, "Not a TTY: interactive mode requires a terminal"),
+            InteractiveError::NotTty => {
+                write!(f, "Not a TTY: interactive mode requires a terminal")
+            }
             InteractiveError::NoCommands => write!(f, "No commands provided"),
         }
     }
@@ -45,21 +47,21 @@ impl std::fmt::Display for InteractiveError {
 impl std::error::Error for InteractiveError {}
 
 /// Prompt user to select from command options with Tab cycling
-/// 
+///
 /// Shows the generated command(s) and prompts for action:
 /// - Tab: Cycle to next command option (inline replacement)
 /// - Enter: Execute the currently selected command
 /// - Ctrl+C or Esc: Abort
-/// 
+///
 /// Uses crossterm for raw mode terminal input to read single keypresses.
-/// 
+///
 /// # Arguments
 /// * `commands` - Slice of command options (at least one required)
 /// * `config` - Runtime configuration (for color settings)
-/// 
+///
 /// # Returns
 /// * `Result<(CommandAction, String), InteractiveError>` - User's action and selected command
-/// 
+///
 /// # Behavior
 /// - Prints command to stderr (not stdout, following UNIX philosophy)
 /// - Tab cycles through options, replacing the command inline
@@ -67,12 +69,12 @@ impl std::error::Error for InteractiveError {}
 /// - Enter executes the currently selected command
 /// - Handles EOF/pipe gracefully (returns Output with first command)
 /// - Respects color settings from config
-/// 
+///
 /// # Examples
 /// ```ignore
 /// use clai::safety::interactive::{prompt_command_action, CommandAction};
 /// use clai::config::Config;
-/// 
+///
 /// let commands = vec!["ls -la".to_string(), "ls -lah".to_string()];
 /// match prompt_command_action(&commands, &config) {
 ///     Ok((CommandAction::Execute, cmd)) => println!("Executing: {}", cmd),
@@ -89,7 +91,7 @@ pub fn prompt_command_action(
     if commands.is_empty() {
         return Err(InteractiveError::NoCommands);
     }
-    
+
     // Check if stderr is a TTY (required for interactive mode)
     if !is_stderr_tty() {
         // Not a TTY - default to output first command (safe for piping)
@@ -127,12 +129,13 @@ pub fn prompt_command_action(
         eprintln!("{}", initial_text);
     }
     eprint!("{}", prompt);
-    stderr.flush().map_err(|e| InteractiveError::IoError(format!("Failed to flush: {}", e)))?;
+    stderr
+        .flush()
+        .map_err(|e| InteractiveError::IoError(format!("Failed to flush: {}", e)))?;
 
     // Enable raw mode to read single keypresses
-    enable_raw_mode().map_err(|e| {
-        InteractiveError::IoError(format!("Failed to enable raw mode: {}", e))
-    })?;
+    enable_raw_mode()
+        .map_err(|e| InteractiveError::IoError(format!("Failed to enable raw mode: {}", e)))?;
 
     // Read keypresses in a loop
     let result = loop {
@@ -149,13 +152,13 @@ pub fn prompt_command_action(
                 {
                     break Ok((CommandAction::Abort, String::new()));
                 }
-                
+
                 // Handle other keys
                 match code {
                     KeyCode::Tab => {
                         // Cycle to next command
                         selected_index = (selected_index + 1) % total;
-                        
+
                         // Use crossterm commands to update display:
                         // 1. Move up one line (to the command line)
                         // 2. Move to column 0
@@ -164,24 +167,24 @@ pub fn prompt_command_action(
                         // 5. Move to next line
                         // 6. Clear prompt line
                         // 7. Reprint prompt
-                        
+
                         let _ = stderr.execute(MoveUp(1));
                         let _ = stderr.execute(MoveToColumn(0));
                         let _ = stderr.execute(Clear(ClearType::CurrentLine));
-                        
+
                         let cmd_text = format_command(&commands[selected_index], selected_index);
                         if use_color {
                             eprintln!("{}", cmd_text.cyan());
                         } else {
                             eprintln!("{}", cmd_text);
                         }
-                        
+
                         // Clear current line (prompt line) and reprint
                         let _ = stderr.execute(MoveToColumn(0));
                         let _ = stderr.execute(Clear(ClearType::CurrentLine));
                         eprint!("{}", prompt);
                         let _ = stderr.flush();
-                        
+
                         continue;
                     }
                     KeyCode::Enter => {
@@ -201,7 +204,10 @@ pub fn prompt_command_action(
                 continue;
             }
             Err(e) => {
-                break Err(InteractiveError::IoError(format!("Failed to read keypress: {}", e)));
+                break Err(InteractiveError::IoError(format!(
+                    "Failed to read keypress: {}",
+                    e
+                )));
             }
         }
     };
@@ -218,13 +224,13 @@ pub fn prompt_command_action(
 }
 
 /// Execute a command directly using std::process::Command
-/// 
+///
 /// Spawns the command as a child process and waits for it to complete.
 /// Returns the exit code of the command.
-/// 
+///
 /// # Arguments
 /// * `command` - The command to execute (will be parsed by shell)
-/// 
+///
 /// # Returns
 /// * `Result<i32, String>` - Exit code of command or error message
 pub fn execute_command(command: &str) -> Result<i32, String> {
@@ -270,10 +276,10 @@ mod tests {
         use clap::Parser;
         let cli = crate::cli::Cli::parse_from(["clai", "test instruction"]);
         let config = crate::config::Config::from_cli(cli);
-        
+
         let commands: Vec<String> = vec![];
         let result = prompt_command_action(&commands, &config);
-        
+
         assert!(result.is_err());
         match result {
             Err(InteractiveError::NoCommands) => (),

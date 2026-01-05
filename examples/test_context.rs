@@ -36,12 +36,23 @@ fn main() {
             // Parse and display summary
             if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&json_str) {
                 println!("=== Context Summary ===");
-                
+
                 if let Some(system) = parsed.get("system").and_then(|s| s.as_object()) {
                     println!("System:");
-                    println!("  OS: {}", system.get("os_name").unwrap_or(&serde_json::Value::Null));
-                    println!("  Shell: {}", system.get("shell").unwrap_or(&serde_json::Value::Null));
-                    println!("  Architecture: {}", system.get("architecture").unwrap_or(&serde_json::Value::Null));
+                    println!(
+                        "  OS: {}",
+                        system.get("os_name").unwrap_or(&serde_json::Value::Null)
+                    );
+                    println!(
+                        "  Shell: {}",
+                        system.get("shell").unwrap_or(&serde_json::Value::Null)
+                    );
+                    println!(
+                        "  Architecture: {}",
+                        system
+                            .get("architecture")
+                            .unwrap_or(&serde_json::Value::Null)
+                    );
                 }
 
                 if let Some(cwd) = parsed.get("cwd").and_then(|c| c.as_str()) {
@@ -92,4 +103,3 @@ fn main() {
         }
     }
 }
-

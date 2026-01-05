@@ -1,16 +1,16 @@
+use crate::cli::Cli;
 use crate::config::file::FileConfig;
 use crate::config::loader::load_all_configs;
-use crate::cli::Cli;
 use std::collections::HashMap;
 
 /// Merge configurations from multiple sources in precedence order
-/// 
+///
 /// Precedence (highest to lowest):
 /// 1. CLI flags (highest priority)
 /// 2. Environment variables (CLAI_*)
 /// 3. Config files (in discovery order, highest priority first)
 /// 4. Defaults (lowest priority)
-/// 
+///
 /// Pure function - takes immutable inputs and returns merged config
 /// No side effects (except reading environment variables)
 pub fn merge_all_configs(cli: &Cli) -> Result<FileConfig, crate::config::loader::ConfigLoadError> {
@@ -32,13 +32,13 @@ pub fn merge_all_configs(cli: &Cli) -> Result<FileConfig, crate::config::loader:
 }
 
 /// Extract configuration from environment variables
-/// 
+///
 /// Environment variables follow pattern: CLAI_<SECTION>_<FIELD>
 /// Examples:
 /// - CLAI_PROVIDER_DEFAULT
 /// - CLAI_CONTEXT_MAX_FILES
 /// - CLAI_UI_COLOR
-/// 
+///
 /// Pure function - reads environment but doesn't modify state
 fn extract_env_config() -> HashMap<String, String> {
     let mut env_config = HashMap::new();
@@ -56,7 +56,7 @@ fn extract_env_config() -> HashMap<String, String> {
 }
 
 /// Merge file configs (deep merge for nested structures)
-/// 
+///
 /// Pure function - takes two immutable configs and returns merged config
 /// No side effects
 fn merge_file_configs(base: FileConfig, override_config: FileConfig) -> FileConfig {
@@ -150,18 +150,15 @@ fn merge_ui_config(
 }
 
 /// Merge environment variable config into file config
-/// 
+///
 /// Pure function - takes immutable inputs and returns merged config
 /// No side effects
-fn merge_env_config(
-    base: FileConfig,
-    env: HashMap<String, String>,
-) -> FileConfig {
+fn merge_env_config(base: FileConfig, env: HashMap<String, String>) -> FileConfig {
     let mut merged = base;
 
     // Parse environment variables and apply to config
     // Format: CLAI_<SECTION>_<FIELD> = value
-    
+
     // Provider section
     if let Some(default) = env.get("provider_default") {
         merged.provider.default = default.clone();
@@ -214,7 +211,7 @@ fn merge_env_config(
 }
 
 /// Merge CLI flags into config
-/// 
+///
 /// Pure function - takes immutable inputs and returns merged config
 /// No side effects
 fn merge_cli_config(base: FileConfig, cli: &Cli) -> FileConfig {
@@ -236,7 +233,9 @@ fn merge_cli_config(base: FileConfig, cli: &Cli) -> FileConfig {
             // Create new provider config entry
             let mut provider_config = crate::config::file::ProviderSpecificConfig::default();
             provider_config.model = Some(model.clone());
-            merged.providers.insert(provider_name.clone(), provider_config);
+            merged
+                .providers
+                .insert(provider_name.clone(), provider_config);
         }
     }
 
@@ -260,7 +259,10 @@ mod tests {
 
         let env_config = extract_env_config();
 
-        assert_eq!(env_config.get("provider_default"), Some(&"test-provider".to_string()));
+        assert_eq!(
+            env_config.get("provider_default"),
+            Some(&"test-provider".to_string())
+        );
         assert_eq!(env_config.get("context_max_files"), Some(&"25".to_string()));
 
         // Clean up
@@ -355,4 +357,3 @@ mod tests {
         std::env::remove_var("CLAI_PROVIDER_DEFAULT");
     }
 }
-

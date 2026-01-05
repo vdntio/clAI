@@ -81,4 +81,3 @@ pub struct Cli {
 pub fn parse_args() -> Result<Cli, clap::Error> {
     Cli::try_parse()
 }
-

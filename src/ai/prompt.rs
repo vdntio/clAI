@@ -1,10 +1,10 @@
 use crate::ai::types::{ChatMessage, ChatRequest};
-use regex::Regex;
 use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 /// Response format for multi-command generation
-/// 
+///
 /// The AI returns a JSON object with a "commands" array
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandsResponse {
@@ -12,13 +12,13 @@ pub struct CommandsResponse {
 }
 
 /// Pre-compiled regex for extracting commands from markdown code fences
-/// 
+///
 /// Matches:
 /// - ```bash\ncommand\n```
 /// - ```sh\ncommand\n```
 /// - ```shell\ncommand\n```
 /// - ```\ncommand\n```
-/// 
+///
 /// Uses lazy static initialization for performance
 static COMMAND_EXTRACTION_REGEX: Lazy<Regex> = Lazy::new(|| {
     // Match code fences with optional language (bash, sh, shell) or no language
@@ -29,16 +29,16 @@ static COMMAND_EXTRACTION_REGEX: Lazy<Regex> = Lazy::new(|| {
 });
 
 /// Build prompt from system context, directory context, history, and user instruction
-/// 
+///
 /// Pure function - concatenates context into a structured prompt string.
 /// No side effects.
-/// 
+///
 /// # Arguments
 /// * `system_context` - System information (JSON string from context gathering)
 /// * `dir_context` - Directory/file context (JSON string)
 /// * `history` - Shell history commands (vector of strings)
 /// * `instruction` - User's natural language instruction
-/// 
+///
 /// # Returns
 /// * `String` - Complete prompt string
 pub fn build_prompt(
@@ -80,16 +80,16 @@ pub fn build_prompt(
 }
 
 /// Extract command from AI response
-/// 
+///
 /// Strips markdown code fences (```bash, ```sh, ```shell, or just ```)
 /// and trims whitespace. If no code fences are found, returns the full
 /// response trimmed.
-/// 
+///
 /// Pure function - no side effects
-/// 
+///
 /// # Arguments
 /// * `response` - AI response text (may contain markdown)
-/// 
+///
 /// # Returns
 /// * `String` - Extracted command (trimmed, no markdown)
 pub fn extract_command(response: &str) -> String {
@@ -105,15 +105,15 @@ pub fn extract_command(response: &str) -> String {
 }
 
 /// Build chat request from prompt (single command)
-/// 
+///
 /// Creates a ChatRequest with system message and user message.
-/// 
+///
 /// Pure function - creates immutable request
-/// 
+///
 /// # Arguments
 /// * `prompt` - Complete prompt string
 /// * `model` - Optional model identifier
-/// 
+///
 /// # Returns
 /// * `ChatRequest` - Chat completion request
 pub fn build_chat_request(prompt: String, model: Option<String>) -> ChatRequest {
@@ -132,20 +132,24 @@ pub fn build_chat_request(prompt: String, model: Option<String>) -> ChatRequest 
 }
 
 /// Build chat request for multiple command options
-/// 
+///
 /// Creates a ChatRequest that instructs the AI to return multiple command
 /// alternatives in JSON format.
-/// 
+///
 /// Pure function - creates immutable request
-/// 
+///
 /// # Arguments
 /// * `prompt` - Complete prompt string with context
 /// * `num_options` - Number of command options to generate (1-10)
 /// * `model` - Optional model identifier
-/// 
+///
 /// # Returns
 /// * `ChatRequest` - Chat completion request for multiple commands
-pub fn build_multi_chat_request(prompt: String, num_options: u8, model: Option<String>) -> ChatRequest {
+pub fn build_multi_chat_request(
+    prompt: String,
+    num_options: u8,
+    model: Option<String>,
+) -> ChatRequest {
     let system_prompt = format!(
         r#"You are a helpful assistant that converts natural language instructions into executable shell commands.
 
@@ -178,20 +182,20 @@ Rules:
 }
 
 /// Extract multiple commands from AI response JSON
-/// 
+///
 /// Parses the AI response which should be a JSON object with a "commands" array.
 /// Handles various edge cases like markdown code fences wrapping JSON.
-/// 
+///
 /// Pure function - no side effects
-/// 
+///
 /// # Arguments
 /// * `response` - AI response text (should be JSON)
-/// 
+///
 /// # Returns
 /// * `Result<Vec<String>, String>` - Extracted commands or error message
 pub fn extract_commands(response: &str) -> Result<Vec<String>, String> {
     let response = response.trim();
-    
+
     // Try to extract JSON from markdown code fences if present
     let json_str = if response.starts_with("```") {
         // Remove markdown code fences
@@ -206,7 +210,7 @@ pub fn extract_commands(response: &str) -> Result<Vec<String>, String> {
     } else {
         response
     };
-    
+
     // Try to parse as CommandsResponse
     match serde_json::from_str::<CommandsResponse>(json_str) {
         Ok(parsed) => {
@@ -220,7 +224,7 @@ pub fn extract_commands(response: &str) -> Result<Vec<String>, String> {
                     .map(|c| c.trim().to_string())
                     .filter(|c| !c.is_empty())
                     .collect();
-                
+
                 if commands.is_empty() {
                     Err("All commands in AI response were empty".to_string())
                 } else {
@@ -234,27 +238,39 @@ pub fn extract_commands(response: &str) -> Result<Vec<String>, String> {
                 if arr.is_empty() {
                     return Err("AI returned empty array".to_string());
                 }
-                return Ok(arr.into_iter().map(|c| c.trim().to_string()).filter(|c| !c.is_empty()).collect());
+                return Ok(arr
+                    .into_iter()
+                    .map(|c| c.trim().to_string())
+                    .filter(|c| !c.is_empty())
+                    .collect());
             }
-            
+
             // Fallback: try to find JSON object in response
             if let Some(start) = json_str.find('{') {
                 if let Some(end) = json_str.rfind('}') {
                     let potential_json = &json_str[start..=end];
                     if let Ok(parsed) = serde_json::from_str::<CommandsResponse>(potential_json) {
                         if !parsed.commands.is_empty() {
-                            return Ok(parsed.commands.into_iter().map(|c| c.trim().to_string()).filter(|c| !c.is_empty()).collect());
+                            return Ok(parsed
+                                .commands
+                                .into_iter()
+                                .map(|c| c.trim().to_string())
+                                .filter(|c| !c.is_empty())
+                                .collect());
                         }
                     }
                 }
             }
-            
+
             // Last fallback: treat entire response as single command
             let single_cmd = extract_command(response);
             if !single_cmd.is_empty() {
                 Ok(vec![single_cmd])
             } else {
-                Err(format!("Failed to parse AI response as JSON: {}. Response: {}", e, response))
+                Err(format!(
+                    "Failed to parse AI response as JSON: {}. Response: {}",
+                    e, response
+                ))
             }
         }
     }
@@ -386,7 +402,9 @@ mod tests {
 
         assert_eq!(request.messages.len(), 2);
         assert_eq!(request.messages[0].role, Role::System);
-        assert!(request.messages[0].content.contains("3 different command options"));
+        assert!(request.messages[0]
+            .content
+            .contains("3 different command options"));
         assert!(request.messages[0].content.contains("JSON"));
         assert_eq!(request.messages[1].content, prompt);
     }
@@ -458,4 +476,3 @@ mod tests {
         assert_eq!(commands[1], "ls -lah");
     }
 }
-

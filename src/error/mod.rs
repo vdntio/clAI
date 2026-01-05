@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 /// Comprehensive error enum with specific exit codes per FR-7
-/// 
+///
 /// Maps to exit codes:
 /// - General = 1 (unexpected errors)
 /// - Usage = 2 (invalid CLI arguments)
@@ -48,7 +48,7 @@ pub enum ClaiError {
 
 impl ClaiError {
     /// Get the exit code for this error
-    /// 
+    ///
     /// Returns the appropriate exit code per FR-7:
     /// - General = 1
     /// - Usage = 2
@@ -66,18 +66,16 @@ impl ClaiError {
     }
 
     /// Print error to stderr with optional backtrace
-    /// 
+    ///
     /// Respects verbosity level for backtrace display.
     /// Always prints human-readable error message to stderr.
-    /// 
+    ///
     /// # Arguments
     /// * `verbose` - Verbosity level (0=normal, 1+=show backtrace)
     pub fn print_stderr(&self, verbose: u8) {
-        
-        
         // Always print the error message
         eprintln!("{}", self);
-        
+
         // Show backtrace if verbose >= 1
         if verbose >= 1 {
             if let Some(backtrace) = self.backtrace() {
@@ -87,22 +85,24 @@ impl ClaiError {
     }
 
     /// Get backtrace if available
-    /// 
+    ///
     /// Extracts backtrace from anyhow error chain
     fn backtrace(&self) -> Option<String> {
         match self {
-            ClaiError::General(err) | ClaiError::Config { source: err } | ClaiError::API { source: err, .. } => {
+            ClaiError::General(err)
+            | ClaiError::Config { source: err }
+            | ClaiError::API { source: err, .. } => {
                 // Try to get backtrace from anyhow error
                 let mut backtrace_str = String::new();
                 let mut current: &dyn std::error::Error = err.as_ref();
-                
+
                 // Build error chain
                 backtrace_str.push_str(&format!("Error: {}\n", current));
                 while let Some(source) = current.source() {
                     backtrace_str.push_str(&format!("Caused by: {}\n", source));
                     current = source;
                 }
-                
+
                 if backtrace_str.len() > 0 {
                     Some(backtrace_str)
                 } else {
@@ -185,4 +185,3 @@ mod tests {
         assert_eq!(clai_err.exit_code(), 3);
     }
 }
-

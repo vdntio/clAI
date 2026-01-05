@@ -2,17 +2,17 @@ use std::fs;
 use std::path::PathBuf;
 
 /// Scan current working directory for top N files/directories
-/// 
+///
 /// Returns a vector of file/directory paths, sorted alphabetically, limited to top N.
 /// Paths are truncated if >80 characters (to basename).
 /// Paths are redacted if redact_paths is true (replaces username/home with [REDACTED]).
-/// 
+///
 /// Pure function with I/O side effects (reads directory)
-/// 
+///
 /// # Arguments
 /// * `max_files` - Maximum number of files/dirs to return (default: 10)
 /// * `redact_paths` - Whether to redact paths (replace username/home with [REDACTED])
-/// 
+///
 /// # Returns
 /// * `Vec<String>` - Vector of truncated/redacted paths
 pub fn scan_directory(max_files: u32, redact_paths: bool) -> Vec<String> {
@@ -30,9 +30,7 @@ pub fn scan_directory(max_files: u32, redact_paths: bool) -> Vec<String> {
 
     // Collect and sort entries
     let mut paths: Vec<PathBuf> = entries
-        .filter_map(|entry| {
-            entry.ok().map(|e| e.path())
-        })
+        .filter_map(|entry| entry.ok().map(|e| e.path()))
         .collect();
 
     // Sort alphabetically by file name
@@ -63,16 +61,16 @@ pub fn scan_directory(max_files: u32, redact_paths: bool) -> Vec<String> {
 }
 
 /// Truncate path if it exceeds max_length
-/// 
+///
 /// If path is longer than max_length, returns just the basename.
 /// Otherwise returns the path unchanged.
-/// 
+///
 /// Pure function - no side effects
-/// 
+///
 /// # Arguments
 /// * `path` - Path string to truncate
 /// * `max_length` - Maximum length (default: 80)
-/// 
+///
 /// # Returns
 /// * `String` - Truncated path
 fn truncate_path(path: &str, max_length: usize) -> String {
@@ -90,17 +88,17 @@ fn truncate_path(path: &str, max_length: usize) -> String {
 }
 
 /// Redact path by replacing username/home directory with [REDACTED]
-/// 
+///
 /// Replaces:
 /// - ~/ with [REDACTED]/
 /// - /home/username/ with [REDACTED]/
 /// - $HOME/ with [REDACTED]/
-/// 
+///
 /// Pure function - no side effects
-/// 
+///
 /// # Arguments
 /// * `path` - Path string to redact
-/// 
+///
 /// # Returns
 /// * `String` - Redacted path
 pub(crate) fn redact_path_internal(path: &str) -> String {
@@ -155,7 +153,8 @@ mod tests {
 
     #[test]
     fn test_truncate_path_long() {
-        let long_path = "/very/long/path/that/exceeds/eighty/characters/and/should/be/truncated/to/basename";
+        let long_path =
+            "/very/long/path/that/exceeds/eighty/characters/and/should/be/truncated/to/basename";
         let truncated = truncate_path(long_path, 80);
         // Should be just the basename
         assert!(truncated.len() <= 80);
@@ -181,7 +180,7 @@ mod tests {
     #[test]
     fn test_scan_directory() {
         let temp_dir = TempDir::new().unwrap();
-        
+
         // Create test files
         for i in 0..15 {
             let file_path = temp_dir.path().join(format!("file_{:02}.txt", i));
@@ -198,7 +197,7 @@ mod tests {
 
         // Should return exactly 10 files (sorted)
         assert_eq!(files.len(), 10);
-        
+
         // Should be sorted alphabetically
         let mut sorted = files.clone();
         sorted.sort();
@@ -211,7 +210,7 @@ mod tests {
     #[test]
     fn test_scan_directory_with_redaction() {
         let temp_dir = TempDir::new().unwrap();
-        
+
         // Create test file
         let file_path = temp_dir.path().join("test.txt");
         let mut file = fs::File::create(&file_path).unwrap();
@@ -220,12 +219,12 @@ mod tests {
         // Change to temp directory
         let original_dir = std::env::current_dir().unwrap();
         let temp_path = temp_dir.path().to_path_buf(); // Keep reference to path
-        
+
         match std::env::set_current_dir(&temp_path) {
             Ok(_) => {
                 // Scan with redaction
                 let files = scan_directory(10, true);
-                
+
                 // Should return files (redaction may or may not apply depending on path)
                 assert!(!files.is_empty());
 
@@ -245,14 +244,14 @@ mod tests {
     #[test]
     fn test_scan_directory_empty() {
         let temp_dir = TempDir::new().unwrap();
-        
+
         // Change to empty temp directory
         let original_dir = std::env::current_dir().unwrap();
         std::env::set_current_dir(temp_dir.path()).unwrap();
 
         // Scan empty directory
         let files = scan_directory(10, false);
-        
+
         // Should return empty or just . and ..
         // (depending on filesystem, may have hidden files)
         // Just verify it doesn't panic
@@ -265,12 +264,11 @@ mod tests {
     #[test]
     fn test_redact_path_pure() {
         let path = "~/test/file";
-        
+
         // Pure function - same input, same output
         let redacted1 = redact_path_internal(path);
         let redacted2 = redact_path_internal(path);
-        
+
         assert_eq!(redacted1, redacted2);
     }
 }
-

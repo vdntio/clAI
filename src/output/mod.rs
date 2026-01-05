@@ -10,20 +10,20 @@ pub fn format_output(config: &Config) -> String {
 }
 
 /// Print command to stdout with proper piped handling
-/// 
+///
 /// If stdout is piped (not a TTY), prints without trailing newline.
 /// If stdout is a TTY, prints with trailing newline.
-/// 
+///
 /// This follows UNIX philosophy: piped output should be clean for further processing.
-/// 
+///
 /// # Arguments
 /// * `command` - The command string to print
-/// 
+///
 /// # Side Effects
 /// * Writes to stdout (this is the only function with side effects in this module)
 pub fn print_command(command: &str) -> io::Result<()> {
     let is_piped = !is_stdout_tty();
-    
+
     if is_piped {
         // Piped output: no newline (clean for further processing)
         print!("{}", command.trim());
@@ -67,7 +67,7 @@ mod tests {
 
         let output = format_output(&config);
         assert_eq!(output, "Command would be generated for: test instruction");
-        
+
         // Verify pure function - same input, same output
         let output2 = format_output(&config);
         assert_eq!(output, output2);
@@ -95,7 +95,7 @@ mod tests {
         let debug = format_config_debug(&config);
         assert!(debug.contains("debug test"));
         assert!(debug.contains("model"));
-        
+
         // Verify pure function - same input, same output
         let debug2 = format_config_debug(&config);
         assert_eq!(debug, debug2);
@@ -104,4 +104,3 @@ mod tests {
     // Note: print_command tests would require mocking stdout/TTY state
     // which is complex. Integration tests are better suited for this.
 }
-

@@ -44,7 +44,7 @@ impl LogLevel {
 /// No side effects - pure function
 pub fn format_log(level: LogLevel, message: &str, color_mode: ColorMode) -> String {
     let use_color = color_mode.should_use_color();
-    
+
     if use_color {
         match level {
             LogLevel::Error => format!("{} {}", colorize("ERROR", "red"), message),
@@ -69,7 +69,7 @@ pub fn format_log(level: LogLevel, message: &str, color_mode: ColorMode) -> Stri
 /// No side effects - pure function
 fn colorize(text: &str, color: &str) -> String {
     use owo_colors::OwoColorize;
-    
+
     match color {
         "red" => text.red().to_string(),
         "yellow" => text.yellow().to_string(),
@@ -164,7 +164,7 @@ mod tests {
         let message = "test message";
         let formatted1 = format_log(LogLevel::Error, message, ColorMode::Never);
         let formatted2 = format_log(LogLevel::Error, message, ColorMode::Never);
-        
+
         // Pure function - same input, same output
         assert_eq!(formatted1, formatted2);
         assert!(formatted1.contains("ERROR"));
@@ -185,4 +185,3 @@ mod tests {
         assert!(!logger.should_log(LogLevel::Trace));
     }
 }
-
