@@ -2,25 +2,25 @@ use crate::ai::types::{ChatRequest, ChatResponse};
 use anyhow::Result;
 
 /// Provider trait for AI chat completions
-/// 
+///
 /// This trait defines the interface for all AI providers.
 /// Implementations must be thread-safe (Send + Sync) to support
 /// concurrent usage.
-/// 
+///
 /// Uses async-trait to enable async methods in traits.
 #[async_trait::async_trait]
 pub trait Provider: Send + Sync {
     /// Complete a chat request
-    /// 
+    ///
     /// Sends a chat completion request to the AI provider and returns
     /// the generated response.
-    /// 
+    ///
     /// # Arguments
     /// * `request` - Chat completion request
-    /// 
+    ///
     /// # Returns
     /// * `Result<ChatResponse>` - Generated response or error
-    /// 
+    ///
     /// # Errors
     /// Returns an error if:
     /// - API request fails (network, timeout, etc.)
@@ -29,19 +29,19 @@ pub trait Provider: Send + Sync {
     async fn complete(&self, request: ChatRequest) -> Result<ChatResponse>;
 
     /// Get the provider name
-    /// 
+    ///
     /// Returns a human-readable name for this provider.
-    /// 
+    ///
     /// # Returns
     /// * `&str` - Provider name
     fn name(&self) -> &str;
 
     /// Check if the provider is available
-    /// 
+    ///
     /// Returns true if the provider is configured and available.
     /// For local providers (e.g., Ollama), this may check if the
     /// service is running.
-    /// 
+    ///
     /// # Returns
     /// * `bool` - True if provider is available
     fn is_available(&self) -> bool {
@@ -52,7 +52,7 @@ pub trait Provider: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai::types::{ChatMessage, Role};
+    use crate::ai::types::ChatMessage;
 
     /// Mock provider for testing
     struct MockProvider {
@@ -108,4 +108,3 @@ mod tests {
     // For dynamic dispatch with async, consider using the async-trait crate or
     // wrapping in a type-erased future.
 }
-

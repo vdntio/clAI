@@ -109,6 +109,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         let config_with_color = crate::config::Config {
@@ -125,6 +126,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         let config_always = crate::config::Config {
@@ -141,6 +143,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         assert_eq!(color_mode_from_config(&config_no_color), ColorMode::Never);

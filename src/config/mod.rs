@@ -19,6 +19,8 @@ pub struct Config {
     pub offline: bool,
     /// Number of command options to generate (1-10)
     pub num_options: u8,
+    /// Show debug information (prompt sent to AI)
+    pub debug: bool,
 }
 
 impl Config {
@@ -50,6 +52,7 @@ impl Config {
             context: cli.context,
             offline: cli.offline,
             num_options,
+            debug: cli.debug,
         }
     }
 }
@@ -92,6 +95,7 @@ mod tests {
             context: None,
             offline: true,
             num_options: 3,
+            debug: false,
         };
 
         let config1 = Config::from_cli(cli.clone());
@@ -125,6 +129,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         let config = Config::from_cli(cli);
@@ -151,6 +156,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 0,
+            debug: false,
         };
         let config = Config::from_cli(cli_zero);
         assert_eq!(config.num_options, 1); // Clamped to minimum 1
@@ -169,6 +175,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 50,
+            debug: false,
         };
         let config = Config::from_cli(cli_high);
         assert_eq!(config.num_options, 10); // Clamped to maximum 10

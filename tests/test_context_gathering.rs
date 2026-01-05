@@ -11,11 +11,14 @@ fn test_context_gathering_integration() {
         quiet: false,
         verbose: 0,
         no_color: false,
+        color: clai::cli::ColorChoice::Auto,
         interactive: false,
         force: false,
         dry_run: false,
         context: None,
         offline: false,
+        num_options: 3,
+        debug: false,
     };
 
     // Gather context

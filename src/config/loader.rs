@@ -23,20 +23,18 @@ pub enum ConfigLoadError {
 }
 
 /// Load and parse a config file with security checks
-/// 
+///
 /// Security requirements:
 /// - File must exist
 /// - File must have 0600 permissions (read/write for owner only)
 /// - File must be valid TOML
-/// 
+///
 /// Returns parsed FileConfig or ConfigLoadError
 /// Pure function with I/O side effects isolated to file operations
 pub fn load_config_file(path: &Path) -> Result<FileConfig, ConfigLoadError> {
     // Check if file exists
     if !path.exists() {
-        return Err(ConfigLoadError::NotFound(
-            path.display().to_string(),
-        ));
+        return Err(ConfigLoadError::NotFound(path.display().to_string()));
     }
 
     // Check file permissions (must be 0600)
@@ -44,7 +42,11 @@ pub fn load_config_file(path: &Path) -> Result<FileConfig, ConfigLoadError> {
 
     // Read file contents
     let contents = fs::read_to_string(path).map_err(|e| {
-        ConfigLoadError::ReadError(format!("Failed to read config file {}: {}", path.display(), e))
+        ConfigLoadError::ReadError(format!(
+            "Failed to read config file {}: {}",
+            path.display(),
+            e
+        ))
     })?;
 
     // Parse TOML
@@ -60,12 +62,12 @@ pub fn load_config_file(path: &Path) -> Result<FileConfig, ConfigLoadError> {
 }
 
 /// Check if a file has secure permissions (0600)
-/// 
+///
 /// On Unix systems, checks that file permissions are exactly 0600
 /// (read/write for owner, no permissions for group/others)
-/// 
+///
 /// On non-Unix systems, this is a no-op (returns Ok)
-/// 
+///
 /// Pure function - checks permissions but doesn't modify state
 #[cfg(unix)]
 pub fn check_file_permissions(path: &Path) -> Result<(), ConfigLoadError> {
@@ -96,7 +98,7 @@ pub fn check_file_permissions(path: &Path) -> Result<(), ConfigLoadError> {
 }
 
 /// Check file permissions on non-Unix systems
-/// 
+///
 /// On non-Unix systems (Windows, etc.), we don't enforce strict permissions
 /// as the permission model is different. This is a no-op.
 #[cfg(not(unix))]
@@ -107,9 +109,9 @@ pub fn check_file_permissions(_path: &Path) -> Result<(), ConfigLoadError> {
 }
 
 /// Resolve environment variable references in API keys
-/// 
+///
 /// Supports format: ${VAR_NAME} or $VAR_NAME
-/// 
+///
 /// Pure function - reads environment but doesn't modify state
 pub fn resolve_env_var_reference(env_ref: &str) -> Option<String> {
     // Remove ${} or $ wrapper
@@ -124,10 +126,10 @@ pub fn resolve_env_var_reference(env_ref: &str) -> Option<String> {
 }
 
 /// Load config from all discovered paths, merging in precedence order
-/// 
+///
 /// Returns the merged config from all existing config files
 /// Files are loaded in order of precedence (highest to lowest)
-/// 
+///
 /// This function has I/O side effects (file reading) but is otherwise pure
 pub fn load_all_configs() -> Result<FileConfig, ConfigLoadError> {
     use crate::config::paths::existing_config_paths;
@@ -163,8 +165,6 @@ pub fn load_all_configs() -> Result<FileConfig, ConfigLoadError> {
                         return Err(e);
                     }
                 }
-                // Log error but continue with other configs
-                eprintln!("Warning: Failed to load config from {}: {}", path.display(), e);
             }
         }
     }
@@ -173,14 +173,14 @@ pub fn load_all_configs() -> Result<FileConfig, ConfigLoadError> {
 }
 
 /// Merge two configs, with `override_config` taking precedence
-/// 
+///
 /// Pure function - takes two immutable configs and returns merged config
 /// No side effects
 fn merge_configs(base: FileConfig, override_config: FileConfig) -> FileConfig {
     // For now, simple merge: override_config takes precedence
     // In a full implementation, we'd do deep merging for nested structures
     // For this subtask, we'll use the override config if it has any non-default values
-    
+
     // Simple strategy: use override_config if it's not default, otherwise use base
     // This is a placeholder - full deep merge will be implemented in subtask 2.4
     if override_config != FileConfig::default() {
@@ -320,4 +320,3 @@ max-files = 20
         assert_eq!(config.provider.default, "openrouter");
     }
 }
-
