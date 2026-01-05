@@ -62,6 +62,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         let output = format_output(&config);
@@ -88,6 +89,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         let debug = format_config_debug(&config);

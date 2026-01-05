@@ -97,6 +97,7 @@ fn create_provider_chain(config: &Config) -> (ProviderChain, Option<String>) {
         context: config.context.clone(),
         offline: config.offline,
         num_options: config.num_options,
+        debug: config.debug,
     };
 
     let file_config = get_file_config(&cli).unwrap_or_default();
@@ -142,6 +143,23 @@ pub async fn generate_command(config: &Config) -> Result<String> {
     // Build chat request for single command
     let request = build_chat_request(prompt, model);
 
+    // Debug output: show the request that will be sent to AI
+    if config.debug {
+        eprintln!("\n=== DEBUG: Request to be sent to AI ===");
+        eprintln!("Model: {:?}", request.model);
+        eprintln!("Temperature: {:?}", request.temperature);
+        eprintln!("Max Tokens: {:?}", request.max_tokens);
+        eprintln!("\nMessages:");
+        for (i, msg) in request.messages.iter().enumerate() {
+            eprintln!("  {}. Role: {:?}", i + 1, msg.role);
+            eprintln!("     Content: {}", msg.content);
+            if i < request.messages.len() - 1 {
+                eprintln!();
+            }
+        }
+        eprintln!("=== END DEBUG ===\n");
+    }
+
     // Call provider chain
     let response = chain
         .complete(request)
@@ -178,6 +196,24 @@ pub async fn generate_commands(config: &Config) -> Result<Vec<String>> {
 
     // Build chat request for multiple commands
     let request = build_multi_chat_request(prompt, config.num_options, model);
+
+    // Debug output: show the request that will be sent to AI
+    if config.debug {
+        eprintln!("\n=== DEBUG: Request to be sent to AI ===");
+        eprintln!("Model: {:?}", request.model);
+        eprintln!("Temperature: {:?}", request.temperature);
+        eprintln!("Max Tokens: {:?}", request.max_tokens);
+        eprintln!("Number of options requested: {}", config.num_options);
+        eprintln!("\nMessages:");
+        for (i, msg) in request.messages.iter().enumerate() {
+            eprintln!("  {}. Role: {:?}", i + 1, msg.role);
+            eprintln!("     Content: {}", msg.content);
+            if i < request.messages.len() - 1 {
+                eprintln!();
+            }
+        }
+        eprintln!("=== END DEBUG ===\n");
+    }
 
     // Call provider chain
     let response = chain

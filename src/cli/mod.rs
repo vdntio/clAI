@@ -69,6 +69,10 @@ pub struct Cli {
     /// Number of command options to generate (default: 3)
     #[arg(short = 'o', long = "options", default_value = "3")]
     pub num_options: u8,
+
+    /// Show the prompt that will be sent to the AI (for debugging)
+    #[arg(short = 'd', long = "debug")]
+    pub debug: bool,
 }
 
 /// Pure function to parse CLI arguments into Cli struct

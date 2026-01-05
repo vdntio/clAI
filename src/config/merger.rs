@@ -285,6 +285,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         let merged = merge_cli_config(base, &cli);
@@ -339,6 +340,7 @@ mod tests {
             context: None,
             offline: false,
             num_options: 3,
+            debug: false,
         };
 
         // Set env var

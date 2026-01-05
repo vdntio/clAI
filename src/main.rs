@@ -229,6 +229,7 @@ async fn handle_cli(
                         context: config.context.clone(),
                         offline: config.offline,
                         num_options: config.num_options,
+                        debug: config.debug,
                     },
                     &file_config,
                 );
