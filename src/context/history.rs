@@ -3,11 +3,11 @@ use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::path::PathBuf;
 
 /// Detect shell from $SHELL environment variable
-/// 
+///
 /// Returns the shell name (e.g., "bash", "zsh", "fish")
-/// 
+///
 /// Pure function - reads environment variable
-/// 
+///
 /// # Returns
 /// * `String` - Shell name, or "unknown" if not detected
 pub fn detect_shell() -> String {
@@ -20,17 +20,17 @@ pub fn detect_shell() -> String {
 }
 
 /// Get history file path for detected shell
-/// 
+///
 /// Maps shell name to its history file path:
 /// - bash: ~/.bash_history
 /// - zsh: ~/.zsh_history
 /// - fish: ~/.local/share/fish/fish_history
-/// 
+///
 /// Pure function - constructs path from shell name
-/// 
+///
 /// # Arguments
 /// * `shell` - Shell name (e.g., "bash", "zsh", "fish")
-/// 
+///
 /// # Returns
 /// * `Option<PathBuf>` - History file path, or None if shell not supported
 pub fn get_history_path(shell: &str) -> Option<PathBuf> {
@@ -52,18 +52,18 @@ pub fn get_history_path(shell: &str) -> Option<PathBuf> {
 }
 
 /// Read last N lines from history file using tail-like logic
-/// 
+///
 /// Uses efficient tail-like approach:
 /// 1. Seeks to end of file minus 4096 bytes (or start if file is smaller)
 /// 2. Reads lines from that point
 /// 3. Takes last N lines
-/// 
+///
 /// Handles missing files gracefully (returns empty vec)
-/// 
+///
 /// # Arguments
 /// * `path` - Path to history file
 /// * `max_lines` - Maximum number of lines to return (default: 3)
-/// 
+///
 /// # Returns
 /// * `Vec<String>` - Last N lines from history file
 pub fn read_history_tail(path: &PathBuf, max_lines: u32) -> Vec<String> {
@@ -92,10 +92,7 @@ pub fn read_history_tail(path: &PathBuf, max_lines: u32) -> Vec<String> {
     }
 
     // Read all lines from seek position
-    let lines: Vec<String> = reader
-        .lines()
-        .filter_map(|line| line.ok())
-        .collect();
+    let lines: Vec<String> = reader.lines().filter_map(|line| line.ok()).collect();
 
     // Take last N lines
     let start = if lines.len() > max_lines as usize {
@@ -108,17 +105,17 @@ pub fn read_history_tail(path: &PathBuf, max_lines: u32) -> Vec<String> {
 }
 
 /// Get shell history (convenience function)
-/// 
+///
 /// Detects shell, gets history path, and reads last N lines
-/// 
+///
 /// # Arguments
 /// * `max_history` - Maximum number of history lines to return (default: 3)
-/// 
+///
 /// # Returns
 /// * `Vec<String>` - Last N commands from shell history
 pub fn get_shell_history(max_history: u32) -> Vec<String> {
     let shell = detect_shell();
-    
+
     match get_history_path(&shell) {
         Some(path) => read_history_tail(&path, max_history),
         None => Vec::new(),
@@ -128,7 +125,6 @@ pub fn get_shell_history(max_history: u32) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::File;
     use std::io::Write;
     use tempfile::NamedTempFile;
 
@@ -201,7 +197,12 @@ mod tests {
         // Create temp file with 20 lines (larger than 4096 bytes when written)
         let mut temp_file = NamedTempFile::new().unwrap();
         for i in 1..=20 {
-            writeln!(temp_file, "command_{}_with_some_additional_text_to_make_line_longer", i).unwrap();
+            writeln!(
+                temp_file,
+                "command_{}_with_some_additional_text_to_make_line_longer",
+                i
+            )
+            .unwrap();
         }
         temp_file.flush().unwrap();
 
@@ -239,7 +240,7 @@ mod tests {
         // This test depends on actual shell history file
         // Just verify it doesn't panic and returns a vec
         let history = get_shell_history(3);
-        
+
         // Should return a vec (may be empty if history file doesn't exist)
         let _ = history;
     }
@@ -249,8 +250,7 @@ mod tests {
         // Pure function - same environment, same output
         let shell1 = detect_shell();
         let shell2 = detect_shell();
-        
+
         assert_eq!(shell1, shell2);
     }
 }
-

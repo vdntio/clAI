@@ -73,7 +73,7 @@ impl ClaiError {
     /// # Arguments
     /// * `verbose` - Verbosity level (0=normal, 1+=show backtrace)
     pub fn print_stderr(&self, verbose: u8) {
-        use std::io::Write;
+        
         
         // Always print the error message
         eprintln!("{}", self);
