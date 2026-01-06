@@ -1,9 +1,9 @@
 #!/bin/bash
-# Test script for clAI configuration system
+# Test script for clai configuration system
 
 set -e
 
-echo "=== Testing clAI Configuration System ==="
+echo "=== Testing clai Configuration System ==="
 echo ""
 
 # Colors for output
@@ -151,4 +151,3 @@ else
     echo -e "${RED}Some tests failed.${NC}"
     exit 1
 fi
-

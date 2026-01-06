@@ -1,4 +1,4 @@
-//! clAI - AI-Powered Shell Command Translator
+//! clai - AI-Powered Shell Command Translator
 //!
 //! A shell-native AI command translator that converts natural language to
 //! executable commands. Follows Unix philosophy: simple, composable, privacy-respecting.

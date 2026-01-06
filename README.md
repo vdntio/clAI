@@ -1,4 +1,4 @@
-# clAI
+# clai
 
 A CLI tool that converts natural language into shell commands using AI.
 
@@ -12,8 +12,8 @@ find . -name "*.rs" -mtime 0
 Requires Rust 1.70+.
 
 ```bash
-git clone https://github.com/yourusername/clAI.git
-cd clAI
+git clone https://github.com/yourusername/clai.git
+cd clai
 cargo install --path .
 ```
 

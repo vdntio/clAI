@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-commit checks for clAI
+# Pre-commit checks for clai
 # Run this script before committing to ensure code quality
 
 set -e

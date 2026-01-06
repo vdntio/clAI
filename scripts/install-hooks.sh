@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Git hooks for clAI
+# Install Git hooks for clai
 # Run this script once after cloning the repository
 
 set -e
@@ -8,7 +8,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 HOOKS_DIR="$REPO_ROOT/.git/hooks"
 SCRIPTS_HOOKS_DIR="$REPO_ROOT/scripts/hooks"
 
-echo "Installing Git hooks for clAI..."
+echo "Installing Git hooks for clai..."
 
 # Create hooks directory if it doesn't exist
 mkdir -p "$HOOKS_DIR"

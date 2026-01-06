@@ -1,4 +1,4 @@
-# Contributing to clAI
+# Contributing to clai
 
 ## Development Setup
 
@@ -8,8 +8,8 @@
 - OpenRouter API key (for testing AI features)
 
 ```bash
-git clone https://github.com/yourusername/clAI.git
-cd clAI
+git clone https://github.com/yourusername/clai.git
+cd clai
 cargo build
 
 # Install Git hooks (recommended)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Git pre-commit hook for clAI
+# Git pre-commit hook for clai
 # This hook runs automatically before each commit
 
 set -e

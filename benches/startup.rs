@@ -1,4 +1,4 @@
-//! Performance benchmarks for clAI startup and critical paths
+//! Performance benchmarks for clai startup and critical paths
 //!
 //! Targets:
 //! - Cold startup: <50ms median

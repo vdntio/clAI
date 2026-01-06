@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Linting checks for clAI
+# Linting checks for clai
 # Runs clippy and format checks without making changes
 
 set -e

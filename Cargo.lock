@@ -217,7 +217,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "clAI"
+name = "clai"
 version = "0.1.0"
 dependencies = [
  "anyhow",
