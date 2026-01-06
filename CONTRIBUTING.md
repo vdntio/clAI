@@ -11,6 +11,9 @@
 git clone https://github.com/yourusername/clAI.git
 cd clAI
 cargo build
+
+# Install Git hooks (recommended)
+./scripts/install-hooks.sh
 ```
 
 ### Running
@@ -102,11 +105,30 @@ color = "auto"
 ## Pull Request Process
 
 1. Fork and create a feature branch
-2. Make changes
-3. Ensure tests pass: `cargo test`
-4. Format code: `cargo fmt`
-5. Check lints: `cargo clippy -- -D warnings`
+2. Install Git hooks: `./scripts/install-hooks.sh` (if not already done)
+3. Make changes
+4. The pre-commit hook will automatically run checks before each commit:
+   - Format code with `cargo fmt`
+   - Run `cargo clippy -- -D warnings`
+   - Run `cargo test`
+5. If you need to bypass the hook temporarily: `git commit --no-verify`
 6. Submit PR
+
+### Manual Checks
+
+If you haven't installed the Git hooks, run these commands before committing:
+
+```bash
+./scripts/pre-commit.sh  # Run all checks
+```
+
+Or individually:
+
+```bash
+cargo fmt                      # Format code
+cargo clippy -- -D warnings    # Check lints
+cargo test                     # Run tests
+```
 
 ## Code Style
 

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Git pre-commit hook for clAI
+# This hook runs automatically before each commit
+
+set -e
+
+echo "Running pre-commit checks..."
+
+echo "1. Formatting code..."
+cargo fmt
+
+echo "2. Running clippy..."
+cargo clippy -- -D warnings
+
+echo "3. Running tests..."
+cargo test
+
+echo "✓ All pre-commit checks passed!"
