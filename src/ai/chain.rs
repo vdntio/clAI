@@ -56,12 +56,16 @@ impl ProviderChain {
         match name {
             "openrouter" => {
                 // Get API key from config or environment
-                let api_key = self
-                    .config
-                    .providers
-                    .get("openrouter")
-                    .and_then(|c| c.api_key_env.as_ref())
-                    .and_then(|env_var| std::env::var(env_var).ok())
+                // Priority: 1) api_key in config, 2) api_key_env in config, 3) OPENROUTER_API_KEY env var
+                let openrouter_config = self.config.providers.get("openrouter");
+                
+                let api_key = openrouter_config
+                    .and_then(|c| c.api_key.clone())
+                    .or_else(|| {
+                        openrouter_config
+                            .and_then(|c| c.api_key_env.as_ref())
+                            .and_then(|env_var| std::env::var(env_var).ok())
+                    })
                     .or_else(|| OpenRouterProvider::api_key_from_env())
                     .ok_or_else(|| anyhow::anyhow!("OpenRouter API key not found"))?;
 
@@ -222,6 +226,7 @@ mod tests {
         providers.insert(
             "openrouter".to_string(),
             ProviderSpecificConfig {
+                api_key: None,
                 api_key_env: Some("OPENROUTER_API_KEY".to_string()),
                 model: Some("openai/gpt-4o".to_string()),
                 endpoint: None,

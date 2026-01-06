@@ -77,6 +77,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         // First call should load config
@@ -110,6 +111,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         // Load config

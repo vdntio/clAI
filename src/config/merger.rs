@@ -146,6 +146,7 @@ fn merge_ui_config(
         } else {
             base.color
         },
+        debug_log_file: override_config.debug_log_file.or(base.debug_log_file),
     }
 }
 
@@ -288,6 +289,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         let merged = merge_cli_config(base, &cli);
@@ -343,6 +345,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         // Set env var

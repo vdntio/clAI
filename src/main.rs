@@ -1,8 +1,9 @@
 use clai::ai::handler::{generate_command, generate_commands};
+use clai::ai::providers::openrouter::init_file_logger;
 use clai::cli::parse_args;
 use clai::config::{get_file_config, Config};
 use clai::error::ClaiError;
-use clai::logging::Logger;
+use clai::logging::{FileLogger, Logger};
 use clai::output::print_command;
 use clai::safety::{
     execute_command, handle_dangerous_confirmation, is_dangerous_command, prompt_command_action,
@@ -40,6 +41,9 @@ async fn main() {
     match result {
         Ok(()) => process::exit(ExitCode::Success.as_i32()),
         Err(err) => {
+            // Log error to file if file logging is enabled
+            err.log_to_file();
+
             // Get verbosity level from parsed CLI args
             // Parse args again just to get verbosity (lightweight operation)
             let verbose = parse_args().map(|cli| cli.verbose).unwrap_or(0);
@@ -103,6 +107,22 @@ async fn run_main(interrupt_flag: &Arc<std::sync::atomic::AtomicBool>) -> Result
 
     // Create runtime config from CLI (CLI flags take precedence over file config)
     let config = Config::from_cli(cli);
+
+    // Initialize file logger if enabled
+    if let Some(ref log_path) = config.debug_log_file {
+        match FileLogger::new(log_path.clone()) {
+            Ok(logger) => {
+                init_file_logger(Arc::new(logger));
+                if config.verbose >= 1 {
+                    eprintln!("Debug logging enabled: {}", log_path.display());
+                }
+            }
+            Err(e) => {
+                // Non-fatal: warn but continue
+                eprintln!("Warning: Could not initialize debug log: {}", e);
+            }
+        }
+    }
 
     // Log missing config file info if verbose
     if was_config_missing && config.verbose >= 1 {
@@ -229,6 +249,10 @@ async fn handle_cli(
                 offline: config.offline,
                 num_options: config.num_options,
                 debug: config.debug,
+                debug_file: config
+                    .debug_log_file
+                    .as_ref()
+                    .map(|p| p.to_string_lossy().to_string()),
             },
             &file_config,
         );

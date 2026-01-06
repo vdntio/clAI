@@ -44,7 +44,10 @@ pub struct ProviderConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ProviderSpecificConfig {
-    /// API key environment variable name (not the key itself)
+    /// API key directly stored in config (protected by 0600 file permissions)
+    pub api_key: Option<String>,
+
+    /// API key environment variable name (alternative to api_key)
     pub api_key_env: Option<String>,
 
     /// Model to use for this provider
@@ -95,6 +98,10 @@ pub struct UiConfig {
     /// Color mode: "auto", "always", or "never"
     #[serde(default = "default_color")]
     pub color: String,
+
+    /// Debug log file path (enables file logging when set)
+    #[serde(default)]
+    pub debug_log_file: Option<String>,
 }
 
 // Default value functions for serde defaults
@@ -151,6 +158,7 @@ impl Default for FileConfig {
             },
             ui: UiConfig {
                 color: default_color(),
+                debug_log_file: None,
             },
             providers: HashMap::new(),
         }
@@ -191,6 +199,7 @@ impl Default for UiConfig {
     fn default() -> Self {
         Self {
             color: default_color(),
+            debug_log_file: None,
         }
     }
 }
@@ -198,6 +207,7 @@ impl Default for UiConfig {
 impl Default for ProviderSpecificConfig {
     fn default() -> Self {
         Self {
+            api_key: None,
             api_key_env: None,
             model: None,
             endpoint: None,

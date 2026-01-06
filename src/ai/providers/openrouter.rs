@@ -1,9 +1,27 @@
 use crate::ai::provider::Provider;
 use crate::ai::types::{ChatMessage, ChatRequest, ChatResponse, Role, Usage};
+use crate::logging::FileLogger;
 use anyhow::Result;
+use once_cell::sync::OnceCell;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::time::Duration;
+
+/// Global file logger instance (initialized once at startup)
+static FILE_LOGGER: OnceCell<Arc<FileLogger>> = OnceCell::new();
+
+/// Initialize the global file logger
+///
+/// Should be called once at application startup if file logging is enabled.
+pub fn init_file_logger(logger: Arc<FileLogger>) {
+    let _ = FILE_LOGGER.set(logger);
+}
+
+/// Get the global file logger if initialized
+pub fn get_file_logger() -> Option<&'static Arc<FileLogger>> {
+    FILE_LOGGER.get()
+}
 
 /// OpenRouter API endpoint
 const OPENROUTER_API_URL: &str = "https://openrouter.ai/api/v1/chat/completions";
@@ -115,29 +133,6 @@ impl OpenRouterProvider {
 
     /// Make API request
     async fn make_request(&self, request: &OpenAIRequest) -> Result<OpenAIResponse> {
-        // #region agent log
-        {
-            use std::fs::OpenOptions;
-            use std::io::Write;
-            if let Ok(mut file) = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open("/home/vee/Coding/clAI/.cursor/debug.log")
-            {
-                let _ = writeln!(
-                    file,
-                    r#"{{"id":"openrouter_before_request","timestamp":{},"location":"openrouter.rs:121","message":"About to send HTTP request","data":{{"model":"{}","url":"{}","has_api_key":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
-                    std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis(),
-                    request.model,
-                    OPENROUTER_API_URL,
-                    !self.api_key.is_empty()
-                );
-            }
-        }
-        // #endregion
         let response = match self
             .client
             .post(OPENROUTER_API_URL)
@@ -149,52 +144,16 @@ impl OpenRouterProvider {
             .send()
             .await
         {
-            Ok(r) => {
-                // #region agent log
-                {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
-                    {
-                        let _ = writeln!(
-                            file,
-                            r#"{{"id":"openrouter_request_sent","timestamp":{},"location":"openrouter.rs:129","message":"HTTP request sent successfully","data":{{"status":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
-                            std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .unwrap()
-                                .as_millis(),
-                            r.status().as_u16()
-                        );
-                    }
-                }
-                // #endregion
-                r
-            }
+            Ok(r) => r,
             Err(e) => {
-                // #region agent log
-                {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
-                    {
-                        let _ = writeln!(
-                            file,
-                            r#"{{"id":"openrouter_request_error","timestamp":{},"location":"openrouter.rs:129","message":"HTTP request failed","data":{{"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
-                            std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .unwrap()
-                                .as_millis(),
-                            e.to_string().replace('"', "\\\"")
-                        );
-                    }
+                // Log network error
+                if let Some(logger) = get_file_logger() {
+                    logger.log_error(
+                        "network_error",
+                        &e.to_string(),
+                        Some(serde_json::json!({"url": OPENROUTER_API_URL})),
+                    );
                 }
-                // #endregion
                 // Network/timeout errors - no status code
                 return Err(anyhow::anyhow!(
                     "Network error: Failed to send request to OpenRouter: {}",
@@ -205,56 +164,21 @@ impl OpenRouterProvider {
         };
 
         let status = response.status();
-        // #region agent log
-        {
-            use std::fs::OpenOptions;
-            use std::io::Write;
-            if let Ok(mut file) = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open("/home/vee/Coding/clAI/.cursor/debug.log")
-            {
-                let _ = writeln!(
-                    file,
-                    r#"{{"id":"openrouter_response_status","timestamp":{},"location":"openrouter.rs:165","message":"Received HTTP response","data":{{"status":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B,C"}}"#,
-                    std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis(),
-                    status.as_u16()
-                );
-            }
-        }
-        // #endregion
         if !status.is_success() {
             let status_code = status.as_u16();
             let error_text = response.text().await.unwrap_or_default();
-            // #region agent log
-            {
-                use std::fs::OpenOptions;
-                use std::io::Write;
-                if let Ok(mut file) = OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open("/home/vee/Coding/clAI/.cursor/debug.log")
-                {
-                    let _ = writeln!(
-                        file,
-                        r#"{{"id":"openrouter_api_error","timestamp":{},"location":"openrouter.rs:167","message":"OpenRouter API returned error","data":{{"status":{},"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}}"#,
-                        std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
-                            .as_millis(),
-                        status_code,
-                        error_text
-                            .replace('"', "\\\"")
-                            .chars()
-                            .take(200)
-                            .collect::<String>()
-                    );
-                }
+
+            // Log API error
+            if let Some(logger) = get_file_logger() {
+                logger.log_error(
+                    "api_error",
+                    &error_text,
+                    Some(serde_json::json!({
+                        "status_code": status_code,
+                        "model": &request.model
+                    })),
+                );
             }
-            // #endregion
 
             // Distinguish error types for better error messages
             let error_msg = match status_code {
@@ -277,52 +201,16 @@ impl OpenRouterProvider {
         }
 
         let api_response: OpenAIResponse = match response.json::<OpenAIResponse>().await {
-            Ok(r) => {
-                // #region agent log
-                {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
-                    {
-                        let _ = writeln!(
-                            file,
-                            r#"{{"id":"openrouter_parse_success","timestamp":{},"location":"openrouter.rs:180","message":"Response parsed successfully","data":{{"choices":{}}},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}}"#,
-                            std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .unwrap()
-                                .as_millis(),
-                            r.choices.len()
-                        );
-                    }
-                }
-                // #endregion
-                r
-            }
+            Ok(r) => r,
             Err(e) => {
-                // #region agent log
-                {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/home/vee/Coding/clAI/.cursor/debug.log")
-                    {
-                        let _ = writeln!(
-                            file,
-                            r#"{{"id":"openrouter_parse_error","timestamp":{},"location":"openrouter.rs:180","message":"Failed to parse response","data":{{"error":"{}"}},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}}"#,
-                            std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .unwrap()
-                                .as_millis(),
-                            e.to_string().replace('"', "\\\"")
-                        );
-                    }
+                // Log parse error
+                if let Some(logger) = get_file_logger() {
+                    logger.log_error(
+                        "parse_error",
+                        &e.to_string(),
+                        Some(serde_json::json!({"model": &request.model})),
+                    );
                 }
-                // #endregion
                 return Err(anyhow::anyhow!(
                     "Failed to parse OpenRouter response: {}",
                     e
@@ -337,19 +225,30 @@ impl OpenRouterProvider {
 #[async_trait::async_trait]
 impl Provider for OpenRouterProvider {
     async fn complete(&self, request: ChatRequest) -> Result<ChatResponse> {
+        // Determine model to use
+        // Priority: request.model > provider default > global default
+        let model = request
+            .model
+            .clone()
+            .or_else(|| self.default_model.clone())
+            .unwrap_or_else(|| DEFAULT_OPENROUTER_MODEL.to_string());
+
+        // Log the request before sending (with full message content)
+        if let Some(logger) = get_file_logger() {
+            logger.log_request(
+                Some(&model),
+                &request.messages,
+                request.temperature,
+                request.max_tokens,
+            );
+        }
+
         // Convert messages to OpenAI format
         let messages: Vec<OpenAIMessage> = request
             .messages
             .iter()
             .map(Self::to_openai_message)
             .collect();
-
-        // Determine model to use
-        // Priority: request.model > provider default > global default
-        let model = request
-            .model
-            .or_else(|| self.default_model.clone())
-            .unwrap_or_else(|| DEFAULT_OPENROUTER_MODEL.to_string());
 
         // Build OpenAI-compatible request
         let openai_request = OpenAIRequest {
@@ -361,6 +260,21 @@ impl Provider for OpenRouterProvider {
 
         // Make request with retry logic
         let response = self.make_request_with_retry(openai_request).await?;
+
+        // Log the response
+        if let Some(logger) = get_file_logger() {
+            let content = response
+                .choices
+                .first()
+                .map(|c| c.message.content.as_str())
+                .unwrap_or("");
+            let usage = response.usage.as_ref().map(|u| Usage {
+                prompt_tokens: u.prompt_tokens,
+                completion_tokens: u.completion_tokens,
+                total_tokens: u.total_tokens,
+            });
+            logger.log_response(Some(&response.model), 200, content, usage.as_ref());
+        }
 
         // Convert to our response format
         Ok(Self::from_openai_response(response))

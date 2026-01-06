@@ -73,6 +73,10 @@ pub struct Cli {
     /// Show the prompt that will be sent to the AI (for debugging)
     #[arg(short = 'd', long = "debug")]
     pub debug: bool,
+
+    /// Enable debug logging to file (default: ~/.cache/clai/debug.log)
+    #[arg(long = "debug-file", value_name = "PATH", num_args = 0..=1, default_missing_value = "", require_equals = true)]
+    pub debug_file: Option<String>,
 }
 
 /// Pure function to parse CLI arguments into Cli struct

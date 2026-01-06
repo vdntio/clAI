@@ -1,3 +1,4 @@
+use crate::ai::providers::openrouter::get_file_logger;
 use thiserror::Error;
 
 /// Comprehensive error enum with specific exit codes per FR-7
@@ -81,6 +82,38 @@ impl ClaiError {
             if let Some(backtrace) = self.backtrace() {
                 eprintln!("\nBacktrace:\n{}", backtrace);
             }
+        }
+    }
+
+    /// Log error to file logger if enabled
+    ///
+    /// Writes structured error data to the debug log file.
+    pub fn log_to_file(&self) {
+        if let Some(logger) = get_file_logger() {
+            let (event, context) = match self {
+                ClaiError::General(e) => (
+                    "general_error",
+                    serde_json::json!({"message": e.to_string()}),
+                ),
+                ClaiError::Usage(msg) => ("usage_error", serde_json::json!({"message": msg})),
+                ClaiError::Config { source } => (
+                    "config_error",
+                    serde_json::json!({"message": source.to_string()}),
+                ),
+                ClaiError::API {
+                    source,
+                    status_code,
+                } => (
+                    "api_error",
+                    serde_json::json!({
+                        "message": source.to_string(),
+                        "status_code": status_code
+                    }),
+                ),
+                ClaiError::Safety(msg) => ("safety_error", serde_json::json!({"message": msg})),
+            };
+
+            logger.log_error(event, &self.to_string(), Some(context));
         }
     }
 

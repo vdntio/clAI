@@ -63,6 +63,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_log_file: None,
         };
 
         let output = format_output(&config);
@@ -90,6 +91,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_log_file: None,
         };
 
         let debug = format_config_debug(&config);

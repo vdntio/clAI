@@ -65,6 +65,10 @@ pub fn gather_context(config: &Config) -> Result<String> {
         offline: config.offline,
         num_options: config.num_options,
         debug: config.debug,
+        debug_file: config
+            .debug_log_file
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string()),
     };
     let file_config = get_file_config(&cli).unwrap_or_default();
 
@@ -174,6 +178,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_log_file: None,
         }
     }
 

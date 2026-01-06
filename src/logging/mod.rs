@@ -1,6 +1,9 @@
 use crate::color::{color_mode_from_config, ColorMode};
 use crate::config::Config;
 
+pub mod file_logger;
+pub use file_logger::FileLogger;
+
 /// Log level enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LogLevel {

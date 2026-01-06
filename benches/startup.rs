@@ -54,6 +54,7 @@ fn benchmark_startup(c: &mut Criterion) {
                 offline: false,
                 num_options: 3,
                 debug: false,
+                debug_file: None,
             };
         });
     });
@@ -75,6 +76,7 @@ fn benchmark_startup(c: &mut Criterion) {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         b.iter(|| {
@@ -101,6 +103,7 @@ fn benchmark_startup(c: &mut Criterion) {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         // Pre-warm cache
@@ -129,6 +132,7 @@ fn benchmark_startup(c: &mut Criterion) {
                 offline: false,
                 num_options: 3,
                 debug: false,
+                debug_file: None,
             };
 
             let _config = Config::from_cli(black_box(cli));
@@ -162,6 +166,7 @@ fn benchmark_startup(c: &mut Criterion) {
                 offline: false,
                 num_options: 3,
                 debug: false,
+                debug_log_file: None,
             };
 
             let _context = gather_context(black_box(&config));
@@ -192,6 +197,7 @@ fn benchmark_startup(c: &mut Criterion) {
                 offline: false,
                 num_options: 3,
                 debug: false,
+                debug_file: None,
             };
 
             // 2. Setup signal handlers
@@ -232,6 +238,7 @@ fn benchmark_startup(c: &mut Criterion) {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
         let _ = get_file_config(&cli);
         let config = Config::from_cli(cli.clone());
@@ -256,6 +263,7 @@ fn benchmark_startup(c: &mut Criterion) {
                 offline: false,
                 num_options: 3,
                 debug: false,
+                debug_file: None,
             };
 
             // 2. Setup signal handlers

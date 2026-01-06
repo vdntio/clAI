@@ -1,4 +1,5 @@
 use crate::cli::{Cli, ColorChoice};
+use std::path::PathBuf;
 
 /// Runtime configuration struct derived from CLI arguments
 /// This is the runtime config used during execution
@@ -21,6 +22,8 @@ pub struct Config {
     pub num_options: u8,
     /// Show debug information (prompt sent to AI)
     pub debug: bool,
+    /// Debug log file path (None = disabled, Some(path) = enabled)
+    pub debug_log_file: Option<PathBuf>,
 }
 
 impl Config {
@@ -38,6 +41,16 @@ impl Config {
             cli.color
         };
 
+        // Handle --debug-file flag
+        // None = not provided, Some("") = use default, Some(path) = use custom path
+        let debug_log_file = cli.debug_file.map(|path| {
+            if path.is_empty() {
+                Self::default_debug_log_path()
+            } else {
+                Self::expand_path(&path)
+            }
+        });
+
         Self {
             instruction: cli.instruction,
             model: cli.model,
@@ -53,7 +66,28 @@ impl Config {
             offline: cli.offline,
             num_options,
             debug: cli.debug,
+            debug_log_file,
         }
+    }
+
+    /// Get default debug log path (~/.cache/clai/debug.log)
+    pub fn default_debug_log_path() -> PathBuf {
+        if let Some(base_dirs) = directories::BaseDirs::new() {
+            base_dirs.cache_dir().join("clai").join("debug.log")
+        } else {
+            // Fallback if we can't determine cache dir
+            PathBuf::from(".clai-debug.log")
+        }
+    }
+
+    /// Expand ~ in path to home directory
+    fn expand_path(path: &str) -> PathBuf {
+        if let Some(stripped) = path.strip_prefix("~/") {
+            if let Some(base_dirs) = directories::BaseDirs::new() {
+                return base_dirs.home_dir().join(stripped);
+            }
+        }
+        PathBuf::from(path)
     }
 }
 
@@ -96,6 +130,7 @@ mod tests {
             offline: true,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         let config1 = Config::from_cli(cli.clone());
@@ -130,6 +165,7 @@ mod tests {
             offline: false,
             num_options: 3,
             debug: false,
+            debug_file: None,
         };
 
         let config = Config::from_cli(cli);
@@ -157,6 +193,7 @@ mod tests {
             offline: false,
             num_options: 0,
             debug: false,
+            debug_file: None,
         };
         let config = Config::from_cli(cli_zero);
         assert_eq!(config.num_options, 1); // Clamped to minimum 1
@@ -176,6 +213,7 @@ mod tests {
             offline: false,
             num_options: 50,
             debug: false,
+            debug_file: None,
         };
         let config = Config::from_cli(cli_high);
         assert_eq!(config.num_options, 10); // Clamped to maximum 10

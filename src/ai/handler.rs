@@ -94,6 +94,10 @@ fn create_provider_chain(config: &Config) -> (ProviderChain, Option<String>) {
         offline: config.offline,
         num_options: config.num_options,
         debug: config.debug,
+        debug_file: config
+            .debug_log_file
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string()),
     };
 
     let file_config = get_file_config(&cli).unwrap_or_default();

@@ -23,6 +23,7 @@ fn main() {
         offline: false,
         num_options: 3,
         debug: false,
+        debug_log_file: None,
     };
 
     // Gather context
