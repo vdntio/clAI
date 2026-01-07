@@ -1,7 +1,7 @@
-/// Locale detection and formatting utilities
-///
-/// Provides locale-aware formatting for dates, numbers, and messages.
-/// Detects locale from LANG environment variable.
+//! Locale detection and formatting utilities
+//!
+//! Provides locale-aware formatting for dates, numbers, and messages.
+//! Detects locale from LANG environment variable.
 
 /// Get the current locale from environment
 ///

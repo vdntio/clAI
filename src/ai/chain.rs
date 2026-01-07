@@ -5,6 +5,9 @@ use crate::config::file::FileConfig;
 use anyhow::Result;
 use std::sync::{Arc, Mutex};
 
+/// Type alias for cached provider instances
+type ProviderCache = Arc<Mutex<Vec<Option<Arc<dyn Provider>>>>>;
+
 /// Provider chain for fallback support
 ///
 /// Implements the Provider trait and tries each provider in sequence
@@ -13,7 +16,7 @@ pub struct ProviderChain {
     /// List of provider names in fallback order
     providers: Vec<String>,
     /// Lazy-initialized provider instances (with interior mutability)
-    provider_instances: Arc<Mutex<Vec<Option<Arc<dyn Provider>>>>>,
+    provider_instances: ProviderCache,
     /// File config for provider settings
     config: FileConfig,
 }
@@ -58,7 +61,7 @@ impl ProviderChain {
                 // Get API key from config or environment
                 // Priority: 1) api_key in config, 2) api_key_env in config, 3) OPENROUTER_API_KEY env var
                 let openrouter_config = self.config.providers.get("openrouter");
-                
+
                 let api_key = openrouter_config
                     .and_then(|c| c.api_key.clone())
                     .or_else(|| {
@@ -66,7 +69,7 @@ impl ProviderChain {
                             .and_then(|c| c.api_key_env.as_ref())
                             .and_then(|env_var| std::env::var(env_var).ok())
                     })
-                    .or_else(|| OpenRouterProvider::api_key_from_env())
+                    .or_else(OpenRouterProvider::api_key_from_env)
                     .ok_or_else(|| anyhow::anyhow!("OpenRouter API key not found"))?;
 
                 // Get model from config (defaults to KimiK2 if not set)

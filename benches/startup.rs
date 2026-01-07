@@ -35,12 +35,12 @@ fn benchmark_startup(c: &mut Criterion) {
     group.sample_size(100);
     group.measurement_time(std::time::Duration::from_secs(10));
 
-    // Benchmark: CLI parsing
-    group.bench_function("parse_args", |b| {
+    // Benchmark: CLI struct creation (not actual parsing - parsing requires process args)
+    group.bench_function("cli_struct_creation", |b| {
         b.iter(|| {
-            // Simulate parsing CLI args - create Cli directly (faster than parsing)
+            // Creates Cli struct directly - measures struct allocation overhead
             let _cli = Cli {
-                instruction: "list files".to_string(),
+                instruction: black_box("list files".to_string()),
                 model: None,
                 provider: None,
                 quiet: false,
@@ -300,11 +300,16 @@ fn benchmark_history_reading(c: &mut Criterion) {
 
     // Create a large history file (1000+ lines)
     let mut temp_file = NamedTempFile::new().unwrap();
-    for i in 1..=1000 {
-        writeln!(temp_file, "command_{}", i).unwrap();
-    }
-    temp_file.flush().unwrap();
     let history_path = PathBuf::from(temp_file.path());
+
+    // Write to file using existing handle (avoids Windows exclusive lock issues)
+    {
+        let file = temp_file.as_file_mut();
+        for i in 1..=1000 {
+            writeln!(file, "command_{}", i).unwrap();
+        }
+        file.flush().unwrap();
+    }
 
     group.bench_function("read_history_tail_1000_lines", |b| {
         b.iter(|| {
@@ -313,8 +318,8 @@ fn benchmark_history_reading(c: &mut Criterion) {
         });
     });
 
-    // Cleanup
-    drop(temp_file);
+    group.finish();
+    // temp_file is dropped here, cleaning up the file
 }
 
 criterion_group!(benches, benchmark_startup, benchmark_history_reading);

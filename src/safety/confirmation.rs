@@ -59,12 +59,32 @@ impl std::error::Error for ConfirmationError {}
 /// - Respects color settings from config
 ///
 /// # Examples
-/// ```
+/// ```no_run
 /// use clai::safety::confirmation::{handle_dangerous_confirmation, Decision};
 /// use clai::config::Config;
+/// use clai::cli::{Cli, ColorChoice};
 ///
+/// // Config is constructed from CLI arguments
+/// let cli = Cli {
+///     instruction: "delete temp files".to_string(),
+///     model: None,
+///     provider: None,
+///     quiet: false,
+///     verbose: 0,
+///     no_color: false,
+///     color: ColorChoice::Auto,
+///     interactive: true,
+///     force: false,
+///     dry_run: false,
+///     context: None,
+///     offline: false,
+///     num_options: 3,
+///     debug: false,
+///     debug_file: None,
+/// };
 /// let config = Config::from_cli(cli);
-/// match handle_dangerous_confirmation("rm -rf /", &config) {
+///
+/// match handle_dangerous_confirmation("rm -rf /tmp/*", &config) {
 ///     Ok(Decision::Execute) => println!("Executing..."),
 ///     Ok(Decision::Copy) => println!("Copying..."),
 ///     Ok(Decision::Abort) => println!("Aborted"),

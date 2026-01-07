@@ -1,6 +1,6 @@
 # Cargo aliases (simpler alternative to cargo-make)
 # Usage: cargo <alias-name>
-# Example: cargo b, cargo r, cargo t
+# Examples: cargo b (build), cargo r (run), cargo t (test), cargo cl (clippy)
 
 [alias]
 # Build aliases

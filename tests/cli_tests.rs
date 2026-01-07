@@ -1,7 +1,10 @@
 use std::process::Command;
 
 fn run_clai(args: &[&str]) -> (String, String, i32) {
-    let output = Command::new("./target/debug/clai")
+    // Use CARGO_BIN_EXE_clai which is set by cargo test to the correct binary path
+    let binary_path = env!("CARGO_BIN_EXE_clai");
+
+    let output = Command::new(binary_path)
         .args(args)
         .output()
         .expect("Failed to execute clai");
@@ -29,39 +32,6 @@ fn test_invalid_flag_returns_exit_2() {
 }
 
 #[test]
-fn test_valid_instruction_parses() {
-    let (stdout, _stderr, exit_code) = run_clai(&["list files"]);
-    assert_eq!(exit_code, 0, "Valid instruction should return exit code 0");
-    assert!(
-        stdout.contains("list files"),
-        "Output should contain instruction"
-    );
-}
-
-#[test]
-fn test_all_flags_parse_correctly() {
-    let (stdout, _stderr, exit_code) = run_clai(&[
-        "--quiet",
-        "--verbose",
-        "--no-color",
-        "--interactive",
-        "--force",
-        "--dry-run",
-        "--offline",
-        "--model",
-        "test-model",
-        "--provider",
-        "test-provider",
-        "test instruction",
-    ]);
-    assert_eq!(exit_code, 0, "All flags should parse correctly");
-    assert!(
-        stdout.contains("test instruction"),
-        "Instruction should be parsed"
-    );
-}
-
-#[test]
 fn test_help_output() {
     let (stdout, _stderr, exit_code) = run_clai(&["--help"]);
     assert_eq!(exit_code, 0, "Help should return exit code 0");
@@ -85,3 +55,21 @@ fn test_version_output() {
         "Version should contain version number"
     );
 }
+
+#[test]
+fn test_offline_not_supported() {
+    // --offline is not yet implemented and should return an error
+    let (_stdout, stderr, exit_code) = run_clai(&["--offline", "test"]);
+    assert_eq!(
+        exit_code, 1,
+        "Offline mode should return exit code 1 (not supported)"
+    );
+    assert!(
+        stderr.contains("Offline mode is not yet supported"),
+        "Should show offline not supported message"
+    );
+}
+
+// Note: Integration tests that require actual API calls or network access
+// are not reliable in CI environments. The unit tests in src/ cover the
+// error handling paths. These integration tests focus on CLI argument parsing.

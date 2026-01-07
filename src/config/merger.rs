@@ -45,9 +45,9 @@ fn extract_env_config() -> HashMap<String, String> {
 
     // Collect all CLAI_* environment variables
     for (key, value) in std::env::vars() {
-        if key.starts_with("CLAI_") {
-            // Remove CLAI_ prefix and convert to lowercase for consistency
-            let config_key = key[5..].to_lowercase();
+        if let Some(stripped) = key.strip_prefix("CLAI_") {
+            // Convert to lowercase for consistency
+            let config_key = stripped.to_lowercase();
             env_config.insert(config_key, value);
         }
     }
@@ -98,6 +98,9 @@ fn merge_provider_config(
 }
 
 /// Merge context configs
+///
+/// For boolean fields, we check if override differs from default - if so, use override.
+/// This allows explicit `false` in override to take precedence over `true` in base.
 fn merge_context_config(
     base: crate::config::file::ContextConfig,
     override_config: crate::config::file::ContextConfig,
@@ -114,8 +117,17 @@ fn merge_context_config(
         } else {
             base.max_history
         },
-        redact_paths: override_config.redact_paths || base.redact_paths,
-        redact_username: override_config.redact_username || base.redact_username,
+        // For booleans: if override differs from default, use override; otherwise use base
+        redact_paths: if override_config.redact_paths != default_context.redact_paths {
+            override_config.redact_paths
+        } else {
+            base.redact_paths
+        },
+        redact_username: if override_config.redact_username != default_context.redact_username {
+            override_config.redact_username
+        } else {
+            base.redact_username
+        },
     }
 }
 
@@ -124,13 +136,20 @@ fn merge_safety_config(
     base: crate::config::file::SafetyConfig,
     override_config: crate::config::file::SafetyConfig,
 ) -> crate::config::file::SafetyConfig {
+    let default_safety = crate::config::file::SafetyConfig::default();
     crate::config::file::SafetyConfig {
         dangerous_patterns: if !override_config.dangerous_patterns.is_empty() {
             override_config.dangerous_patterns
         } else {
             base.dangerous_patterns
         },
-        confirm_dangerous: override_config.confirm_dangerous,
+        // For booleans: if override differs from default, use override; otherwise use base
+        confirm_dangerous: if override_config.confirm_dangerous != default_safety.confirm_dangerous
+        {
+            override_config.confirm_dangerous
+        } else {
+            base.confirm_dangerous
+        },
     }
 }
 
@@ -232,8 +251,10 @@ fn merge_cli_config(base: FileConfig, cli: &Cli) -> FileConfig {
             provider_config.model = Some(model.clone());
         } else {
             // Create new provider config entry
-            let mut provider_config = crate::config::file::ProviderSpecificConfig::default();
-            provider_config.model = Some(model.clone());
+            let provider_config = crate::config::file::ProviderSpecificConfig {
+                model: Some(model.clone()),
+                ..Default::default()
+            };
             merged
                 .providers
                 .insert(provider_name.clone(), provider_config);

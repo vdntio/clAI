@@ -54,7 +54,7 @@ pub fn get_system_info() -> SystemInfo {
     let shell = std::env::var("SHELL")
         .unwrap_or_else(|_| "unknown".to_string())
         .split('/')
-        .last()
+        .next_back()
         .unwrap_or("unknown")
         .to_string();
 

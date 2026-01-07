@@ -119,12 +119,11 @@ pub(crate) fn redact_path_internal(path: &str) -> String {
         redacted = "[REDACTED]".to_string();
     }
 
-    // Replace $HOME/ with [REDACTED]/
-    if let Ok(home) = std::env::var("HOME") {
-        let home_var = format!("${}/", home);
-        if redacted.starts_with(&home_var) {
-            redacted = redacted.replacen(&home_var, "[REDACTED]/", 1);
-        }
+    // Replace literal $HOME/ with [REDACTED]/ (for paths that contain unexpanded $HOME)
+    if redacted.starts_with("$HOME/") {
+        redacted = redacted.replacen("$HOME/", "[REDACTED]/", 1);
+    } else if redacted == "$HOME" {
+        redacted = "[REDACTED]".to_string();
     }
 
     // Replace username in path (e.g., /home/username/...)

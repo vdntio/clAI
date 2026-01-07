@@ -45,6 +45,11 @@ pub enum ClaiError {
     /// Dangerous command rejected by user or safety checks
     #[error("Safety error: {0}")]
     Safety(String),
+
+    /// Help or version display (exit code 0)
+    /// Used when --help or --version is requested
+    #[error("{0}")]
+    HelpOrVersion(String),
 }
 
 impl ClaiError {
@@ -63,6 +68,7 @@ impl ClaiError {
             ClaiError::Config { .. } => 3,
             ClaiError::API { .. } => 4,
             ClaiError::Safety(_) => 5,
+            ClaiError::HelpOrVersion(_) => 0,
         }
     }
 
@@ -111,6 +117,7 @@ impl ClaiError {
                     }),
                 ),
                 ClaiError::Safety(msg) => ("safety_error", serde_json::json!({"message": msg})),
+                ClaiError::HelpOrVersion(_) => return, // Don't log help/version as errors
             };
 
             logger.log_error(event, &self.to_string(), Some(context));
@@ -136,7 +143,7 @@ impl ClaiError {
                     current = source;
                 }
 
-                if backtrace_str.len() > 0 {
+                if !backtrace_str.is_empty() {
                     Some(backtrace_str)
                 } else {
                     None
@@ -147,10 +154,21 @@ impl ClaiError {
     }
 }
 
-/// Convert clap::Error to ClaiError::Usage
+/// Convert clap::Error to ClaiError
+///
+/// Special handling for help/version which should exit cleanly with code 0
 impl From<clap::Error> for ClaiError {
     fn from(err: clap::Error) -> Self {
-        ClaiError::Usage(err.to_string())
+        use clap::error::ErrorKind;
+
+        // Handle help and version specially - they should return HelpOrVersion variant
+        // The caller (main) is responsible for printing and exiting with code 0
+        match err.kind() {
+            ErrorKind::DisplayHelp | ErrorKind::DisplayVersion => {
+                ClaiError::HelpOrVersion(err.to_string())
+            }
+            _ => ClaiError::Usage(err.to_string()),
+        }
     }
 }
 
@@ -187,6 +205,10 @@ mod tests {
             4
         );
         assert_eq!(ClaiError::Safety("test".to_string()).exit_code(), 5);
+        assert_eq!(
+            ClaiError::HelpOrVersion("help message".to_string()).exit_code(),
+            0
+        );
     }
 
     #[test]

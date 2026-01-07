@@ -65,7 +65,7 @@ pub fn build_prompt(
         for (i, cmd) in history.iter().enumerate() {
             prompt.push_str(&format!("  {}. {}\n", i + 1, cmd));
         }
-        prompt.push_str("\n");
+        prompt.push('\n');
     }
 
     // User instruction

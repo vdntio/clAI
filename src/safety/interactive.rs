@@ -236,15 +236,23 @@ pub fn prompt_command_action(
 pub fn execute_command(command: &str) -> Result<i32, String> {
     use std::process::Command;
 
-    // Detect shell from environment
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
-
-    // Execute command using shell
-    let status = Command::new(&shell)
-        .arg("-c")
-        .arg(command)
+    // Platform-specific shell execution
+    #[cfg(windows)]
+    let status = Command::new("cmd")
+        .args(["/C", command])
         .status()
         .map_err(|e| format!("Failed to execute command: {}", e))?;
+
+    #[cfg(not(windows))]
+    let status = {
+        // Detect shell from environment, fallback to /bin/sh
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+        Command::new(&shell)
+            .arg("-c")
+            .arg(command)
+            .status()
+            .map_err(|e| format!("Failed to execute command: {}", e))?
+    };
 
     Ok(status.code().unwrap_or(1))
 }

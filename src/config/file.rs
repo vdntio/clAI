@@ -41,7 +41,7 @@ pub struct ProviderConfig {
 }
 
 /// Provider-specific configuration (e.g., [openrouter], [ollama])
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ProviderSpecificConfig {
     /// API key directly stored in config (protected by 0600 file permissions)
@@ -200,17 +200,6 @@ impl Default for UiConfig {
         Self {
             color: default_color(),
             debug_log_file: None,
-        }
-    }
-}
-
-impl Default for ProviderSpecificConfig {
-    fn default() -> Self {
-        Self {
-            api_key: None,
-            api_key_env: None,
-            model: None,
-            endpoint: None,
         }
     }
 }

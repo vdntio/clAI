@@ -12,8 +12,8 @@ find . -name "*.rs" -mtime 0
 Requires Rust 1.70+.
 
 ```bash
-git clone https://github.com/yourusername/clai.git
-cd clai
+git clone https://github.com/Vedaant-Rajoo/clAI.git
+cd clAI
 cargo install --path .
 ```
 
@@ -36,14 +36,14 @@ clai -o 3 "compress images"      # generate 3 options to choose from
 
 ### Options
 
-| Flag | Description |
-|------|-------------|
-| `-i, --interactive` | Prompt before executing |
-| `-n, --dry-run` | Show command without executing |
-| `-o, --options <N>` | Generate N command options |
-| `-f, --force` | Skip safety confirmations |
-| `-q, --quiet` | Minimal output |
-| `-v, --verbose` | Increase verbosity |
+| Flag                | Description                    |
+| ------------------- | ------------------------------ |
+| `-i, --interactive` | Prompt before executing        |
+| `-n, --dry-run`     | Show command without executing |
+| `-o, --options <N>` | Generate N command options     |
+| `-f, --force`       | Skip safety confirmations      |
+| `-q, --quiet`       | Minimal output                 |
+| `-v, --verbose`     | Increase verbosity             |
 
 ## Configuration
 

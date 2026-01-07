@@ -3,6 +3,9 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "=== Testing clai Configuration System ==="
 echo ""
 
@@ -28,31 +31,31 @@ test_result() {
 
 # Test 1: Default config (no files, no env, no CLI flags)
 echo "Test 1: Default configuration"
-OUTPUT=$(cd /home/vee/Coding/clAI && cargo r -- "test" 2>&1)
+OUTPUT=$(cd "$SCRIPT_DIR" && cargo r -- "test" 2>&1)
 test_result "Default config loads successfully"
 
 # Test 2: CLI flag override (--provider)
 echo ""
 echo "Test 2: CLI flag override (--provider)"
-OUTPUT=$(cd /home/vee/Coding/clAI && cargo r -- --provider "test-provider" "test" 2>&1)
+OUTPUT=$(cd "$SCRIPT_DIR" && cargo r -- --provider "test-provider" "test" 2>&1)
 test_result "CLI --provider flag works"
 
 # Test 3: CLI flag override (--model)
 echo ""
 echo "Test 3: CLI flag override (--model)"
-OUTPUT=$(cd /home/vee/Coding/clAI && cargo r -- --model "gpt-4" "test" 2>&1)
+OUTPUT=$(cd "$SCRIPT_DIR" && cargo r -- --model "gpt-4" "test" 2>&1)
 test_result "CLI --model flag works"
 
 # Test 4: Environment variable override
 echo ""
 echo "Test 4: Environment variable override"
-OUTPUT=$(cd /home/vee/Coding/clAI && CLAI_PROVIDER_DEFAULT="env-provider" cargo r -- "test" 2>&1)
+OUTPUT=$(cd "$SCRIPT_DIR" && CLAI_PROVIDER_DEFAULT="env-provider" cargo r -- "test" 2>&1)
 test_result "Environment variable CLAI_PROVIDER_DEFAULT works"
 
 # Test 5: Config file loading (current directory)
 echo ""
 echo "Test 5: Config file in current directory"
-cd /home/vee/Coding/clAI
+cd "$SCRIPT_DIR"
 cat > .clai.toml << 'EOF'
 [provider]
 default = "file-provider"
@@ -77,14 +80,14 @@ default = "xdg-provider"
 max-history = 5
 EOF
 chmod 600 ~/.config/clai/config.toml 2>/dev/null || true
-OUTPUT=$(cd /home/vee/Coding/clAI && cargo r -- "test" 2>&1)
+OUTPUT=$(cd "$SCRIPT_DIR" && cargo r -- "test" 2>&1)
 test_result "XDG config file loads successfully"
 rm -f ~/.config/clai/config.toml 2>/dev/null || true
 
 # Test 7: Precedence test (CLI > env > file)
 echo ""
 echo "Test 7: Precedence order (CLI > env > file)"
-cd /home/vee/Coding/clAI
+cd "$SCRIPT_DIR"
 cat > .clai.toml << 'EOF'
 [provider]
 default = "file-provider"
@@ -98,7 +101,7 @@ rm -f .clai.toml
 # Test 8: Permission check (should fail with 644)
 echo ""
 echo "Test 8: Permission check (insecure permissions)"
-cd /home/vee/Coding/clAI
+cd "$SCRIPT_DIR"
 cat > .clai.toml << 'EOF'
 [provider]
 default = "test"
@@ -116,13 +119,13 @@ rm -f .clai.toml
 # Test 9: Lazy loading (should only load once)
 echo ""
 echo "Test 9: Lazy loading (config cached after first access)"
-OUTPUT=$(cd /home/vee/Coding/clAI && cargo r -- "test" 2>&1)
+OUTPUT=$(cd "$SCRIPT_DIR" && cargo r -- "test" 2>&1)
 test_result "Lazy loading works (no errors on multiple calls)"
 
 # Test 10: Invalid TOML (should handle gracefully)
 echo ""
 echo "Test 10: Invalid TOML handling"
-cd /home/vee/Coding/clAI
+cd "$SCRIPT_DIR"
 cat > .clai.toml << 'EOF'
 [provider
 default = "invalid"

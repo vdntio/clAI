@@ -14,7 +14,7 @@ pub fn detect_shell() -> String {
     std::env::var("SHELL")
         .unwrap_or_else(|_| "unknown".to_string())
         .split('/')
-        .last()
+        .next_back()
         .unwrap_or("unknown")
         .to_string()
 }
@@ -81,18 +81,14 @@ pub fn read_history_tail(path: &PathBuf, max_lines: u32) -> Vec<String> {
     };
 
     // Seek to position for tail reading (4096 bytes from end, or start if smaller)
-    let seek_pos = if file_size > 4096 {
-        file_size - 4096
-    } else {
-        0
-    };
+    let seek_pos = file_size.saturating_sub(4096);
 
-    if let Err(_) = reader.seek(SeekFrom::Start(seek_pos)) {
+    if reader.seek(SeekFrom::Start(seek_pos)).is_err() {
         return Vec::new();
     }
 
     // Read all lines from seek position
-    let lines: Vec<String> = reader.lines().filter_map(|line| line.ok()).collect();
+    let lines: Vec<String> = reader.lines().map_while(Result::ok).collect();
 
     // Take last N lines
     let start = if lines.len() > max_lines as usize {

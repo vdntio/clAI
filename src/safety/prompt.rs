@@ -17,12 +17,15 @@ use crate::signals::{is_stdin_tty, is_stdout_tty};
 /// * `bool` - `true` if we should prompt, `false` otherwise
 ///
 /// # Examples
-/// ```
+/// ```ignore
+/// use clap::Parser;
 /// use clai::cli::Cli;
 /// use clai::config::file::FileConfig;
 /// use clai::safety::prompt::should_prompt;
 ///
-/// let cli = Cli { force: false, ..Default::default() };
+/// // Cli is a clap-derived struct; construct via parse_from.
+/// // See crate::cli::Cli for full field definitions.
+/// let cli = Cli::parse_from(&["clai", "your instruction here"]);
 /// let config = FileConfig::default();
 /// // Result depends on TTY state
 /// let result = should_prompt(&cli, &config);

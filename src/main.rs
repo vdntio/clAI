@@ -40,6 +40,11 @@ async fn main() {
     // Handle result and exit with appropriate code
     match result {
         Ok(()) => process::exit(ExitCode::Success.as_i32()),
+        Err(ClaiError::HelpOrVersion(msg)) => {
+            // Help/version requested - print to stdout and exit cleanly
+            print!("{}", msg);
+            process::exit(0);
+        }
         Err(err) => {
             // Log error to file if file logging is enabled
             err.log_to_file();
@@ -187,7 +192,7 @@ async fn handle_cli(
         let status_code = extract_status_code(&error_str);
 
         ClaiError::API {
-            source: anyhow::Error::from(e).context("Failed to generate command from AI provider"),
+            source: e.context("Failed to generate command from AI provider"),
             status_code,
         }
     })?;
@@ -209,7 +214,7 @@ async fn handle_cli(
         for (i, cmd) in commands.iter().enumerate() {
             if i > 0 {
                 // Add newline between commands when multiple
-                print!("\n");
+                println!();
             }
             print_command(cmd).map_err(|e| {
                 ClaiError::General(

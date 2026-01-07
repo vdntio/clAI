@@ -8,8 +8,8 @@
 - OpenRouter API key (for testing AI features)
 
 ```bash
-git clone https://github.com/yourusername/clai.git
-cd clai
+git clone https://github.com/Vedaant-Rajoo/clAI.git
+cd clAI
 cargo build
 
 # Install Git hooks (recommended)
@@ -52,10 +52,10 @@ cargo bench --features bench  # Run benchmarks
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
+| Variable             | Description            |
+| -------------------- | ---------------------- |
 | `OPENROUTER_API_KEY` | API key for OpenRouter |
-| `NO_COLOR` | Disable colored output |
+| `NO_COLOR`           | Disable colored output |
 
 ### Config File Locations
 
@@ -92,15 +92,15 @@ color = "auto"
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | General error |
-| 2 | Usage error |
-| 3 | Configuration error |
-| 4 | API error |
-| 5 | Safety error (dangerous command rejected) |
-| 130 | Interrupted (Ctrl+C) |
+| Code | Meaning                                   |
+| ---- | ----------------------------------------- |
+| 0    | Success                                   |
+| 1    | General error                             |
+| 2    | Usage error                               |
+| 3    | Configuration error                       |
+| 4    | API error                                 |
+| 5    | Safety error (dangerous command rejected) |
+| 130  | Interrupted (Ctrl+C)                      |
 
 ## Pull Request Process
 
