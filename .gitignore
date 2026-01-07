@@ -31,3 +31,9 @@ node_modules/
 
 # Local config files
 .clai.toml
+
+# TaskMaster (local to developer, not tracked in Git)
+.taskmaster/
+
+# Cursor IDE (local to developer, not tracked in Git)
+.cursor/
