@@ -53,9 +53,9 @@ description = "Run all linters (clippy + fmt check)"
 dependencies = ["clippy", "fmt-check"]
 
 [tasks.dev]
-description = "Run in development mode with watch (requires cargo-watch)"
+description = "Watch and rebuild on save (run clai in another terminal)"
 command = "cargo"
-args = ["watch", "-x", "run"]
+args = ["watch", "-x", "build"]
 
 [tasks.release]
 description = "Build optimized release binary"

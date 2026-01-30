@@ -33,6 +33,10 @@ crossterm = "0.29"
 tempfile = "3.10"
 once_cell = "1.20"
 
+[profile.dev]
+# Keep incremental on so small changes rebuild in seconds (default, but explicit)
+incremental = true
+
 [profile.release]
 codegen-units = 1
 lto = true

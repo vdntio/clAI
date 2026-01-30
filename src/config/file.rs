@@ -102,6 +102,10 @@ pub struct UiConfig {
     /// Debug log file path (enables file logging when set)
     #[serde(default)]
     pub debug_log_file: Option<String>,
+
+    /// Whether to run in interactive mode by default
+    #[serde(default)]
+    pub interactive: bool,
 }
 
 // Default value functions for serde defaults
@@ -159,6 +163,7 @@ impl Default for FileConfig {
             ui: UiConfig {
                 color: default_color(),
                 debug_log_file: None,
+                interactive: false,
             },
             providers: HashMap::new(),
         }
@@ -200,6 +205,7 @@ impl Default for UiConfig {
         Self {
             color: default_color(),
             debug_log_file: None,
+            interactive: false,
         }
     }
 }

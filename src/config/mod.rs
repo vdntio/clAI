@@ -81,7 +81,7 @@ impl Config {
     }
 
     /// Expand ~ in path to home directory
-    fn expand_path(path: &str) -> PathBuf {
+    pub fn expand_path(path: &str) -> PathBuf {
         if let Some(stripped) = path.strip_prefix("~/") {
             if let Some(base_dirs) = directories::BaseDirs::new() {
                 return base_dirs.home_dir().join(stripped);

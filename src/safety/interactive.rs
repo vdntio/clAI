@@ -128,7 +128,11 @@ pub fn prompt_command_action(
     } else {
         eprintln!("{}", initial_text);
     }
-    eprint!("{}", prompt);
+    if use_color {
+        eprint!("{}", prompt.dimmed());
+    } else {
+        eprint!("{}", prompt);
+    }
     stderr
         .flush()
         .map_err(|e| InteractiveError::IoError(format!("Failed to flush: {}", e)))?;
@@ -182,7 +186,11 @@ pub fn prompt_command_action(
                         // Clear current line (prompt line) and reprint
                         let _ = stderr.execute(MoveToColumn(0));
                         let _ = stderr.execute(Clear(ClearType::CurrentLine));
-                        eprint!("{}", prompt);
+                        if use_color {
+                            eprint!("{}", prompt.dimmed());
+                        } else {
+                            eprint!("{}", prompt);
+                        }
                         let _ = stderr.flush();
 
                         continue;

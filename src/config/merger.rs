@@ -166,6 +166,12 @@ fn merge_ui_config(
             base.color
         },
         debug_log_file: override_config.debug_log_file.or(base.debug_log_file),
+        // For booleans: if override differs from default, use override; otherwise use base
+        interactive: if override_config.interactive != default_ui.interactive {
+            override_config.interactive
+        } else {
+            base.interactive
+        },
     }
 }
 

@@ -111,10 +111,24 @@ async fn run_main(interrupt_flag: &Arc<std::sync::atomic::AtomicBool>) -> Result
     };
 
     // Create runtime config from CLI (CLI flags take precedence over file config)
-    let config = Config::from_cli(cli);
+    let mut config = Config::from_cli(cli);
 
-    // Initialize file logger if enabled
-    if let Some(ref log_path) = config.debug_log_file {
+    // Apply file config's interactive setting (CLI -i flag can only enable, not disable)
+    // If file config has interactive=true and CLI didn't specify -i, use file config value
+    if file_config.ui.interactive && !config.interactive {
+        config.interactive = true;
+    }
+
+    // Initialize file logger if enabled (CLI takes precedence over config file)
+    let debug_log_path = config.debug_log_file.clone().or_else(|| {
+        file_config
+            .ui
+            .debug_log_file
+            .as_ref()
+            .map(|p| Config::expand_path(p))
+    });
+
+    if let Some(ref log_path) = debug_log_path {
         match FileLogger::new(log_path.clone()) {
             Ok(logger) => {
                 init_file_logger(Arc::new(logger));
