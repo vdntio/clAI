@@ -38,6 +38,7 @@ export const FileConfigSchema = z.object({
       color: z.enum(['auto', 'always', 'never']).default('auto'),
       debugLogFile: z.string().optional(),
       interactive: z.boolean().default(false),
+      promptTimeout: z.number().int().min(0).max(300000).default(30000),
     })
     .optional(),
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
@@ -73,6 +74,7 @@ export interface Config {
     debugLogFile?: string
     interactive: boolean
     numOptions: number // 1-10, from CLI
+    promptTimeout: number // milliseconds, 0 = no timeout, default 30000
   }
 
   // Provider-specific configs

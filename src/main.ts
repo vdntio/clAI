@@ -10,6 +10,14 @@ import {
   buildPrompt,
   formatPromptForDebug,
 } from './ai/index.js'
+import { checkSafety, SafetyError } from './safety/index.js'
+import {
+  renderUI,
+  UserAction,
+  withSpinner,
+  printCommand,
+  printWarning,
+} from './ui/index.js'
 
 async function main(): Promise<void> {
   try {
@@ -84,12 +92,11 @@ async function main(): Promise<void> {
       process.stderr.write(`\n========================\n\n`)
     }
 
-    // Generate commands from AI
-    if (!config.quiet) {
-      process.stderr.write(`Generating commands for: ${config.instruction}\n`)
-    }
-
-    const commands = await generateCommands(context, config.instruction, config)
+    // Generate commands from AI (with spinner)
+    const commands = await withSpinner(
+      'Thinking...',
+      () => generateCommands(context, config.instruction, config)
+    )
 
     // Output the generated commands
     if (config.dryRun) {
@@ -98,17 +105,80 @@ async function main(): Promise<void> {
       commands.forEach((cmd, i) => {
         process.stdout.write(`# Option ${i + 1}:\n${cmd}\n\n`)
       })
+      process.exit(0)
+    }
+
+    // Check safety of generated commands
+    const safety = checkSafety(commands, config)
+
+    if (config.debug) {
+      process.stderr.write('=== Debug: Safety Check ===\n')
+      process.stderr.write(`Is dangerous: ${safety.isDangerous}\n`)
+      process.stderr.write(`Should prompt: ${safety.shouldPrompt}\n`)
+      process.stderr.write(`===========================\n\n`)
+    }
+
+    // Determine if we should show interactive UI
+    // Always show in TTY mode (we're executing, not just copying)
+    // Skip only if: piped, force flag, or dry-run
+    const isTTY = process.stdin.isTTY && process.stdout.isTTY
+    const showUI = isTTY && !config.force
+
+    let selectedCommand: string
+
+    if (showUI) {
+      // Show interactive UI for command selection
+      const result = await renderUI({
+        commands,
+        config,
+        isDangerous: safety.isDangerous,
+      })
+
+      if (result.action === UserAction.Abort) {
+        throw new SafetyError('Command execution aborted by user')
+      }
+
+      selectedCommand = result.command
     } else {
-      // Normal mode: output first command (or all if interactive - TBD in Task 7)
-      const cmd = commands[0]
-      if (cmd) {
-        // Only add newline if TTY, for clean piping
-        const newline = process.stdout.isTTY ? '\n' : ''
-        process.stdout.write(`${cmd}${newline}`)
+      // Non-interactive: use first command
+      selectedCommand = commands[0] ?? ''
+
+      // Show warning for dangerous commands in non-interactive mode
+      if (safety.isDangerous && !config.force) {
+        printWarning('This command may be dangerous. Use -f to skip this warning.')
       }
     }
 
-    process.exit(0)
+    // Execute or output the selected command
+    if (selectedCommand) {
+      if (showUI) {
+        // Interactive: execute the command
+        const { spawn } = await import('child_process')
+        const shell = process.env.SHELL || '/bin/sh'
+
+        const child = spawn(shell, ['-c', selectedCommand], {
+          stdio: 'inherit', // Inherit stdin/stdout/stderr
+          env: process.env,
+        })
+
+        child.on('close', (code) => {
+          process.exit(code ?? 0)
+        })
+
+        child.on('error', (err) => {
+          process.stderr.write(`Failed to execute: ${err.message}\n`)
+          process.exit(1)
+        })
+
+        return // Don't exit here, wait for child process
+      } else {
+        // Non-interactive (piped): just output the command
+        printCommand(selectedCommand, safety.isDangerous)
+        process.exit(0)
+      }
+    } else {
+      process.exit(0)
+    }
   } catch (error) {
     if (error instanceof ConfigError) {
       process.stderr.write(`Config error: ${error.message}\n`)
@@ -122,6 +192,11 @@ async function main(): Promise<void> {
 
     if (error instanceof AIError) {
       process.stderr.write(`AI error: ${error.message}\n`)
+      process.exit(error.code)
+    }
+
+    if (error instanceof SafetyError) {
+      process.stderr.write(`Aborted: ${error.message}\n`)
       process.exit(error.code)
     }
 

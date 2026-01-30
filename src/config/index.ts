@@ -32,6 +32,7 @@ const DEFAULT_CONFIG: FileConfig = {
   ui: {
     color: 'auto',
     interactive: false,
+    promptTimeout: 30000,
   },
   providers: {},
 }
@@ -260,14 +261,23 @@ function loadEnvConfig(): Partial<FileConfig> {
   }
 
   // UI settings
-  if (process.env.CLAI_UI_COLOR) {
+  if (process.env.CLAI_UI_COLOR || process.env.CLAI_UI_PROMPT_TIMEOUT) {
     const color = process.env.CLAI_UI_COLOR
-    if (color === 'auto' || color === 'always' || color === 'never') {
-      envConfig.ui = {
-        color,
-        interactive: DEFAULT_CONFIG.ui!.interactive,
-        debugLogFile: DEFAULT_CONFIG.ui!.debugLogFile,
-      }
+    const promptTimeout = process.env.CLAI_UI_PROMPT_TIMEOUT
+      ? parseInt(process.env.CLAI_UI_PROMPT_TIMEOUT, 10)
+      : undefined
+
+    envConfig.ui = {
+      color:
+        color === 'auto' || color === 'always' || color === 'never'
+          ? color
+          : DEFAULT_CONFIG.ui!.color,
+      interactive: DEFAULT_CONFIG.ui!.interactive,
+      debugLogFile: DEFAULT_CONFIG.ui!.debugLogFile,
+      promptTimeout:
+        promptTimeout !== undefined && !isNaN(promptTimeout)
+          ? Math.max(0, Math.min(300000, promptTimeout))
+          : DEFAULT_CONFIG.ui!.promptTimeout,
     }
   }
 
@@ -360,6 +370,7 @@ export function buildConfig(fileConfig: FileConfig, cli: Cli): Config {
       debugLogFile,
       interactive,
       numOptions,
+      promptTimeout: fileConfig.ui?.promptTimeout ?? DEFAULT_CONFIG.ui!.promptTimeout!,
     },
     providers: fileConfig.providers ?? DEFAULT_CONFIG.providers!,
 

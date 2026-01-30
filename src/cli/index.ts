@@ -57,7 +57,7 @@ export function parseCli(argv: string[] = process.argv): Cli {
     .option('-n, --dry-run', 'Only print command(s), no execute', false)
     .option('-c, --context <file>', 'Optional context file path')
     .option('--offline', 'Offline mode (not implemented)', false)
-    .option('-o, --options <count>', 'Number of command options (1-10)', parseNumOptions, 3)
+    .option('-o, --options <count>', 'Number of command options (1-10)', parseNumOptions, 1)
     .option('-d, --debug', 'Print prompt/request to stderr', false)
     .option('--debug-file [path]', 'Enable file logging (optional path)')
     .configureOutput({
