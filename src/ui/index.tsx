@@ -6,7 +6,6 @@ import { render } from 'ink'
 import { App } from './App.js'
 import {
   UserAction,
-  UIPhase,
   type RenderOptions,
   type RenderResult,
 } from './types.js'
@@ -110,8 +109,8 @@ export function renderUI(options: RenderOptions): Promise<RenderResult> {
       {
         // Render to stderr so stdout stays clean for command output
         stdout: process.stderr,
-        // Pass debug mode
-        debug: config.debug,
+        // Note: Do NOT pass debug: true to Ink - it makes renders static/append-only
+        // Our config.debug is for clai debug output, not Ink's internal debug mode
       }
     )
 

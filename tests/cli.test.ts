@@ -133,9 +133,9 @@ describe('CLI Parser', () => {
   })
 
   describe('options count', () => {
-    it('defaults numOptions to 3', () => {
+    it('defaults numOptions to 1', () => {
       const cli = parse(['test'])
-      expect(cli.numOptions).toBe(3)
+      expect(cli.numOptions).toBe(1)
     })
 
     it('parses -o with value', () => {
@@ -191,13 +191,17 @@ describe('CLI Parser', () => {
   describe('combined flags', () => {
     it('parses multiple flags together', () => {
       const cli = parse([
-        '-m', 'gpt-4',
-        '-p', 'openrouter',
+        '-m',
+        'gpt-4',
+        '-p',
+        'openrouter',
         '-i',
         '-f',
         '-n',
-        '-o', '5',
-        '-v', '-v',
+        '-o',
+        '5',
+        '-v',
+        '-v',
         '-d',
         'find large files',
       ])

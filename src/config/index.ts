@@ -6,7 +6,6 @@ import {
   FileConfig,
   FileConfigSchema,
   Config,
-  ProviderConfig,
 } from './types.js'
 import { Cli } from '../cli/index.js'
 

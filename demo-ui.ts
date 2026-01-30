@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // Demo script to test the interactive UI
 
-import { renderUI, UserAction, withSpinner, printCommand, printWarning } from './src/ui/index.js'
+import { renderUI, withSpinner, printCommand, printWarning } from './src/ui/index.js'
 import type { Config } from './src/config/types.js'
 
 const config: Config = {

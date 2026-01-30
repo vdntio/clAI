@@ -1,6 +1,6 @@
 // Context module tests
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   gatherContext,
   getSystemInfo,
@@ -18,7 +18,7 @@ import {
   ContextError,
 } from '../src/context/index.js'
 import { Config } from '../src/config/types.js'
-import { mkdirSync, rmSync, writeFileSync, chmodSync } from 'fs'
+import { mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 
@@ -166,14 +166,18 @@ describe('Context Module', () => {
         writeFileSync(join(testDir, 'b-file.txt'), 'content')
         writeFileSync(join(testDir, 'c-file.txt'), 'content')
         mkdirSync(join(testDir, 'subdir'), { recursive: true })
-      } catch {}
+      } catch {
+        // Directory may already exist
+      }
     })
 
     afterEach(() => {
       // Clean up
       try {
         rmSync(testDir, { recursive: true, force: true })
-      } catch {}
+      } catch {
+        // Directory may not exist
+      }
     })
 
     it('should get current working directory', () => {
@@ -210,10 +214,6 @@ describe('Context Module', () => {
     })
 
     it('should return empty array on directory read error', () => {
-      // Try to scan a non-existent directory by mocking
-      const originalCwd = process.cwd()
-      const fakeDir = join(process.cwd(), 'non-existent-dir-12345')
-
       // We can't easily test this without mocking fs
       // The function should return [] on error
       expect(() => scanDirectory(10, false)).not.toThrow()

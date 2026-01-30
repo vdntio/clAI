@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   loadFileConfig,
   buildConfig,
-  getConfig,
   clearConfigCache,
   ConfigError,
   getProviderApiKey,
@@ -12,11 +11,9 @@ import { FileConfig, Config } from '../src/config/types.js'
 import { Cli } from '../src/cli/index.js'
 import { mkdirSync, writeFileSync, rmSync, chmodSync } from 'fs'
 import { join } from 'path'
-import { homedir } from 'os'
 
 describe('Config Module', () => {
   const testDir = join(process.cwd(), 'test-configs')
-  const homeDir = homedir()
 
   beforeEach(() => {
     // Clear cache before each test
@@ -25,7 +22,9 @@ describe('Config Module', () => {
     // Create test directory
     try {
       mkdirSync(testDir, { recursive: true })
-    } catch {}
+    } catch {
+      // Directory may already exist
+    }
   })
 
   afterEach(() => {
@@ -33,20 +32,30 @@ describe('Config Module', () => {
     clearConfigCache()
     try {
       rmSync(testDir, { recursive: true, force: true })
-    } catch {}
+    } catch {
+      // Directory may not exist
+    }
   })
 
   describe('FileConfig Loading', () => {
     it('should return defaults when no config files exist', () => {
-      const config = loadFileConfig()
+      // Change to test directory to avoid loading project root's .clai.toml
+      const originalCwd = process.cwd()
+      process.chdir(testDir)
 
-      expect(config.provider.default).toBe('openrouter')
-      expect(config.provider.fallback).toEqual([])
-      expect(config.context.maxFiles).toBe(10)
-      expect(config.context.maxHistory).toBe(3)
-      expect(config.context.redactPaths).toBe(false)
-      expect(config.safety.confirmDangerous).toBe(true)
-      expect(config.ui.color).toBe('auto')
+      try {
+        const config = loadFileConfig()
+
+        expect(config.provider.default).toBe('openrouter')
+        expect(config.provider.fallback).toEqual([])
+        expect(config.context.maxFiles).toBe(10)
+        expect(config.context.maxHistory).toBe(3)
+        expect(config.context.redactPaths).toBe(false)
+        expect(config.safety.confirmDangerous).toBe(true)
+        expect(config.ui.color).toBe('auto')
+      } finally {
+        process.chdir(originalCwd)
+      }
     })
 
     it('should load and parse TOML config file', () => {
@@ -454,7 +463,7 @@ default = "cached"
       const config = {
         providers: {
           openrouter: {
-            apiKey: '\${TEST_API_KEY}',
+            apiKey: '${TEST_API_KEY}',
           },
         },
       } as unknown as Config

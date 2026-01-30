@@ -59,10 +59,15 @@ Unix: config files must be 0600 permissions.
 
 - **Package manager:** Use **bun** only (no npm). Commands: `bun init -y`, `bun add -d` for dev deps, `bun install`, `bun run build` / `bun run test` / `bun run lint` / `bun run dev`.
 - **Task Master:** Tasks live in `.taskmaster/tasks/tasks.json`; PRD for task generation in `.taskmaster/docs/prd.txt`. MCP tools require `projectRoot` as absolute path. After `update_task`, re-run `expand_task` if a task lost subtasks.
+- **Task Master workflow:** Mark tasks as `done` via `set_task_status` after completing implementation.
 - **Vitest + CLI tests:** Set `test.disableConsoleIntercept: true` in `vitest.config.ts` so stdout/stderr capture works when asserting CLI output.
 
 **Conventions & gotchas:**
 - ESLint 9 flat config: use `ignores` in `eslint.config.js`, not `.eslintignore`.
+- ESLint ignores: Add external/generated directories to `ignores` (e.g., `.opencode/**`).
+- ESLint test files: Allow `@typescript-eslint/no-explicit-any` in `tests/**/*.ts` for mocking globals.
+- Empty catch blocks: Add a comment (e.g., `// Directory may already exist`) to satisfy `no-empty` rule.
+- Re-export pattern: Don't import-then-re-export from same module; use direct `export { X } from './types'`.
 - Node globals in ESLint: use `globals` package (e.g. `globals.node`) so `process`, `__dirname` are recognized.
 - Ink + React: tsconfig needs `"jsx": "react-jsx"` and `include` with `**/*.tsx`.
 - Bun init: creates `index.ts` by default; remove or point entry to real entry (e.g. `src/main.ts`).

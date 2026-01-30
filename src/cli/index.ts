@@ -49,15 +49,34 @@ export function parseCli(argv: string[] = process.argv): Cli {
     .option('-m, --model <model>', 'Override AI model')
     .option('-p, --provider <provider>', 'Override AI provider')
     .option('-q, --quiet', 'Minimal output', false)
-    .option('-v, --verbose', 'Increase verbosity (can be repeated)', (_, prev) => prev + 1, 0)
+    .option(
+      '-v, --verbose',
+      'Increase verbosity (can be repeated)',
+      (_, prev) => prev + 1,
+      0
+    )
     .option('--no-color', 'Disable color output')
-    .option('--color <mode>', 'Color mode: auto, always, never', parseColorMode, 'auto')
-    .option('-i, --interactive', 'Interactive mode (prompt execute/copy/abort)', false)
+    .option(
+      '--color <mode>',
+      'Color mode: auto, always, never',
+      parseColorMode,
+      'auto'
+    )
+    .option(
+      '-i, --interactive',
+      'Interactive mode (prompt execute/copy/abort)',
+      false
+    )
     .option('-f, --force', 'Skip dangerous command confirmation', false)
     .option('-n, --dry-run', 'Only print command(s), no execute', false)
     .option('-c, --context <file>', 'Optional context file path')
     .option('--offline', 'Offline mode (not implemented)', false)
-    .option('-o, --options <count>', 'Number of command options (1-10)', parseNumOptions, 1)
+    .option(
+      '-o, --options <count>',
+      'Number of command options (1-10)',
+      parseNumOptions,
+      1
+    )
     .option('-d, --debug', 'Print prompt/request to stderr', false)
     .option('--debug-file [path]', 'Enable file logging (optional path)')
     .configureOutput({

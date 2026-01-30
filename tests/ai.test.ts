@@ -7,7 +7,6 @@ import {
   vi,
   beforeEach,
   afterEach,
-  type MockInstance,
 } from 'vitest'
 import {
   generateCommands,

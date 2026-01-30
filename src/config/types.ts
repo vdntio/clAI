@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { Cli } from '../cli/index.js'
 
 // Provider configuration
 export const ProviderConfigSchema = z.object({

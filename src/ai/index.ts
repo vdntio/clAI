@@ -7,7 +7,6 @@ import type { Config } from '../config/types.js'
 import {
   ChatMessage,
   ChatRequest,
-  ChatResponse,
   AIError,
   AIProvider,
 } from './types.js'

@@ -28,7 +28,14 @@ export default [
       ],
     },
   },
+  // Allow 'any' in test files for mocking purposes
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    files: ['tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    ignores: ['dist/**', 'node_modules/**', '.opencode/**'],
   },
 ]

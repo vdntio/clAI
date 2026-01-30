@@ -18,6 +18,7 @@ import {
   printCommand,
   printWarning,
 } from './ui/index.js'
+import { executeCommand, ExecutionError } from './output/index.js'
 
 async function main(): Promise<void> {
   try {
@@ -153,24 +154,14 @@ async function main(): Promise<void> {
     if (selectedCommand) {
       if (showUI) {
         // Interactive: execute the command
-        const { spawn } = await import('child_process')
-        const shell = process.env.SHELL || '/bin/sh'
+        const result = await executeCommand(selectedCommand)
 
-        const child = spawn(shell, ['-c', selectedCommand], {
-          stdio: 'inherit', // Inherit stdin/stdout/stderr
-          env: process.env,
-        })
+        if (!result.success) {
+          process.stderr.write(`Error: ${result.error.message}\n`)
+          process.exit(result.error.code)
+        }
 
-        child.on('close', (code) => {
-          process.exit(code ?? 0)
-        })
-
-        child.on('error', (err) => {
-          process.stderr.write(`Failed to execute: ${err.message}\n`)
-          process.exit(1)
-        })
-
-        return // Don't exit here, wait for child process
+        process.exit(result.exitCode)
       } else {
         // Non-interactive (piped): just output the command
         printCommand(selectedCommand, safety.isDangerous)
@@ -197,6 +188,11 @@ async function main(): Promise<void> {
 
     if (error instanceof SafetyError) {
       process.stderr.write(`Aborted: ${error.message}\n`)
+      process.exit(error.code)
+    }
+
+    if (error instanceof ExecutionError) {
+      process.stderr.write(`Execution error: ${error.message}\n`)
       process.exit(error.code)
     }
 

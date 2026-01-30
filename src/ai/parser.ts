@@ -125,7 +125,9 @@ function tryParseMultipleCommands(content: string): string[] {
           )
           return cmds.map((c: string) => c.trim())
         }
-      } catch {}
+      } catch {
+        // JSON parse failed, continue to other strategies
+      }
     }
   }
 

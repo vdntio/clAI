@@ -1,7 +1,7 @@
 // src/ui/App.tsx
 // Clean, minimal interactive UI
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Box, useInput, useApp, Text } from 'ink'
 import { UserAction, type AppProps } from './types.js'
 import { useTimeout } from './hooks/useTimeout.js'
@@ -23,23 +23,16 @@ export function App({
   const currentCommand = commands[selectedIndex] ?? ''
   const hasMultiple = commands.length > 1
 
-  // Debug logging
-  useEffect(() => {
-    if (config.debug) {
-      console.error(`[UI] Commands: ${commands.length}, Dangerous: ${isDangerous}`)
-    }
-  }, [commands.length, isDangerous, config.debug])
+  // Note: Avoid console.error inside Ink components - it interferes with rendering
+  // Debug output is handled in renderUI before Ink mounts
 
   // Handle completion
   const handleComplete = useCallback(
     (action: UserAction) => {
-      if (config.debug) {
-        console.error(`[UI] ${action}: ${currentCommand}`)
-      }
       onComplete(action, currentCommand)
       exit()
     },
-    [currentCommand, onComplete, exit, config.debug]
+    [currentCommand, onComplete, exit]
   )
 
   // Auto-abort timeout
