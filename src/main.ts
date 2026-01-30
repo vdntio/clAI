@@ -4,6 +4,12 @@
 import { parseCli } from './cli/index.js'
 import { getConfig, ConfigError } from './config/index.js'
 import { gatherContext, ContextError } from './context/index.js'
+import {
+  generateCommands,
+  AIError,
+  buildPrompt,
+  formatPromptForDebug,
+} from './ai/index.js'
 
 async function main(): Promise<void> {
   try {
@@ -66,21 +72,40 @@ async function main(): Promise<void> {
         process.stderr.write(`Stdin: (none - not piped)\n`)
       }
       process.stderr.write(`===============================\n\n`)
-    }
 
-    // For now, just output what we would do
-    if (!config.quiet) {
-      process.stderr.write(`Instruction: ${config.instruction}\n`)
-      process.stderr.write('\n⚠️  AI integration not yet implemented.\n')
-      process.stderr.write(
-        'This would normally send your instruction to OpenRouter and return shell commands.\n\n'
+      // Show the full prompt being sent to AI
+      const messages = buildPrompt(
+        context,
+        config.instruction,
+        config.ui.numOptions
       )
+      process.stderr.write('=== Debug: AI Prompt ===\n')
+      process.stderr.write(formatPromptForDebug(messages))
+      process.stderr.write(`\n========================\n\n`)
     }
 
-    // Output format for piping (just the command - when implemented)
-    // For now, echo the instruction back
+    // Generate commands from AI
+    if (!config.quiet) {
+      process.stderr.write(`Generating commands for: ${config.instruction}\n`)
+    }
+
+    const commands = await generateCommands(context, config.instruction, config)
+
+    // Output the generated commands
     if (config.dryRun) {
-      process.stdout.write(`# Would execute: echo "${config.instruction}"\n`)
+      // Dry-run: show all commands with comments
+      process.stdout.write(`# Generated ${commands.length} command(s):\n`)
+      commands.forEach((cmd, i) => {
+        process.stdout.write(`# Option ${i + 1}:\n${cmd}\n\n`)
+      })
+    } else {
+      // Normal mode: output first command (or all if interactive - TBD in Task 7)
+      const cmd = commands[0]
+      if (cmd) {
+        // Only add newline if TTY, for clean piping
+        const newline = process.stdout.isTTY ? '\n' : ''
+        process.stdout.write(`${cmd}${newline}`)
+      }
     }
 
     process.exit(0)
@@ -92,6 +117,11 @@ async function main(): Promise<void> {
 
     if (error instanceof ContextError) {
       process.stderr.write(`Context error: ${error.message}\n`)
+      process.exit(error.code)
+    }
+
+    if (error instanceof AIError) {
+      process.stderr.write(`AI error: ${error.message}\n`)
       process.exit(error.code)
     }
 

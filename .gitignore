@@ -31,3 +31,4 @@ node_modules/
 .taskmaster/
 .cursor/
 .opencode/
+.clai.toml
