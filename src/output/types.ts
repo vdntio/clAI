@@ -1,5 +1,6 @@
 // src/output/types.ts
 // Types for command execution and result handling
+import { ClaiError } from '../error/index.js'
 
 /**
  * Execution result type (functional Result pattern)
@@ -20,18 +21,14 @@ export type ValidationResult =
  * ExecutionError represents failures during command execution.
  * Each error type has a specific exit code following shell conventions.
  */
-export class ExecutionError extends Error {
-  public readonly code: number
-
+export class ExecutionError extends ClaiError {
   constructor(
     message: string,
     code: number,
     cause?: Error
   ) {
-    super(message, { cause })
-    this.code = code
+    super(message, code, cause)
     this.name = 'ExecutionError'
-    // Maintain proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, ExecutionError.prototype)
   }
 }

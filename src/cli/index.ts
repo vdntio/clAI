@@ -1,4 +1,5 @@
 import { Command, InvalidArgumentError } from 'commander'
+import { UsageError } from '../error/index.js'
 
 export type ColorMode = 'auto' | 'always' | 'never'
 
@@ -93,9 +94,7 @@ export function parseCli(argv: string[] = process.argv): Cli {
   // instruction is required unless help/version was shown
   const instruction = args[0]
   if (!instruction) {
-    process.stderr.write('Error: missing required argument: instruction\n')
-    process.stderr.write("Try 'clai --help' for more information.\n")
-    process.exit(2)
+    throw new UsageError('missing required argument: instruction')
   }
 
   // --no-color overrides --color

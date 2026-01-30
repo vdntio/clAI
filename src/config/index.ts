@@ -8,6 +8,7 @@ import {
   Config,
 } from './types.js'
 import { Cli } from '../cli/index.js'
+import { ClaiError } from '../error/index.js'
 
 // Config cache to avoid reloading
 let configCache: FileConfig | null = null
@@ -91,13 +92,11 @@ function checkFilePermissions(path: string): void {
 }
 
 // Custom error class with exit code
-export class ConfigError extends Error {
-  code: number
-
-  constructor(message: string, code: number = 1) {
-    super(message)
+export class ConfigError extends ClaiError {
+  constructor(message: string, code: number = 3) {
+    super(message, code)
     this.name = 'ConfigError'
-    this.code = code
+    Object.setPrototypeOf(this, ConfigError.prototype)
   }
 }
 

@@ -1,4 +1,5 @@
 // AI Types and Interfaces for the clai CLI
+import { ClaiError } from '../error/index.js'
 
 /**
  * Chat message for OpenAI-compatible API
@@ -45,13 +46,13 @@ export interface AIProvider {
  * Error class for AI operations
  * Exit code 4 as per PRD (API error)
  */
-export class AIError extends Error {
-  code = 4
-  statusCode?: number
+export class AIError extends ClaiError {
+  public readonly statusCode?: number
 
-  constructor(message: string, statusCode?: number) {
-    super(message)
+  constructor(message: string, statusCode?: number, cause?: Error) {
+    super(message, 4, cause)
     this.name = 'AIError'
     this.statusCode = statusCode
+    Object.setPrototypeOf(this, AIError.prototype)
   }
 }

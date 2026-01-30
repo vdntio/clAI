@@ -18,6 +18,8 @@ import { MockProvider } from './mock.js'
 // Re-export types for consumers
 export {
   AIError,
+} from './types.js'
+export type {
   ChatMessage,
   ChatRequest,
   ChatResponse,

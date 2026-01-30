@@ -1,5 +1,6 @@
 // src/safety/types.ts
 // Safety error type for abort/timeout scenarios
+import { ClaiError } from '../error/index.js'
 
 /**
  * SafetyError is thrown when:
@@ -9,13 +10,10 @@
  *
  * Exit code: 5
  */
-export class SafetyError extends Error {
-  readonly code = 5
-
-  constructor(message: string) {
-    super(message)
+export class SafetyError extends ClaiError {
+  constructor(message: string, cause?: Error) {
+    super(message, 5, cause)
     this.name = 'SafetyError'
-    // Maintain proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, SafetyError.prototype)
   }
 }

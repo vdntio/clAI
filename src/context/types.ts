@@ -1,4 +1,5 @@
 // Context Data Types for the clai CLI
+import { ClaiError } from '../error/index.js'
 
 // System Information Interface
 export interface SystemInfo {
@@ -30,11 +31,10 @@ export interface ContextData {
 }
 
 /** Error class for context gathering failures */
-export class ContextError extends Error {
-  code: number
+export class ContextError extends ClaiError {
   constructor(message: string, code: number = 1) {
-    super(message)
+    super(message, code)
     this.name = 'ContextError'
-    this.code = code
+    Object.setPrototypeOf(this, ContextError.prototype)
   }
 }

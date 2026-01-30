@@ -19,6 +19,7 @@ import {
   printWarning,
 } from './ui/index.js'
 import { executeCommand, ExecutionError } from './output/index.js'
+import { UsageError, InterruptError } from './error/index.js'
 
 async function main(): Promise<void> {
   try {
@@ -171,6 +172,12 @@ async function main(): Promise<void> {
       process.exit(0)
     }
   } catch (error) {
+    if (error instanceof UsageError) {
+      process.stderr.write(`Error: ${error.message}\n`)
+      process.stderr.write("Try 'clai --help' for more information.\n")
+      process.exit(error.code)
+    }
+
     if (error instanceof ConfigError) {
       process.stderr.write(`Config error: ${error.message}\n`)
       process.exit(error.code)
@@ -193,6 +200,11 @@ async function main(): Promise<void> {
 
     if (error instanceof ExecutionError) {
       process.stderr.write(`Execution error: ${error.message}\n`)
+      process.exit(error.code)
+    }
+
+    if (error instanceof InterruptError) {
+      process.stderr.write(`\n${error.message}\n`)
       process.exit(error.code)
     }
 

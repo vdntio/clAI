@@ -10,7 +10,8 @@ import { readStdin } from './stdin.js'
 import { redactPath } from './redaction.js'
 
 // Re-export types and functions
-export { ContextData, ContextError, SystemInfo } from './types.js'
+export { ContextError } from './types.js'
+export type { ContextData, SystemInfo } from './types.js'
 export { getSystemInfo, clearSystemCache } from './system.js'
 export { getCwd, scanDirectory, getRedactedCwd } from './directory.js'
 export { getShellHistory, getDetectedShell } from './history.js'

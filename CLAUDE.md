@@ -68,10 +68,14 @@ Unix: config files must be 0600 permissions.
 - ESLint test files: Allow `@typescript-eslint/no-explicit-any` in `tests/**/*.ts` for mocking globals.
 - Empty catch blocks: Add a comment (e.g., `// Directory may already exist`) to satisfy `no-empty` rule.
 - Re-export pattern: Don't import-then-re-export from same module; use direct `export { X } from './types'`.
+- TypeScript interface exports: Use `export type { Interface }` not `export { Interface }` to avoid runtime errors with bun/vitest.
 - Node globals in ESLint: use `globals` package (e.g. `globals.node`) so `process`, `__dirname` are recognized.
 - Ink + React: tsconfig needs `"jsx": "react-jsx"` and `include` with `**/*.tsx`.
 - Bun init: creates `index.ts` by default; remove or point entry to real entry (e.g. `src/main.ts`).
 - Commander counting option: use callback `(_, prev) => prev + 1` for verbose/count-style flags.
+- Error classes: Use `Object.setPrototypeOf(this, ClassName.prototype)` for proper instanceof checks across inheritance.
+- Readonly at runtime: Use `Object.defineProperty(this, 'prop', { value, writable: false })` with `readonly prop!: Type` declaration.
+- Circular deps: Base error classes should not re-export derived classes; keep imports unidirectional.
 
 ## Recommended Stack
 

@@ -27,8 +27,19 @@ describe('CLI Parser', () => {
       expect(cli.instruction).toBe('find all rust files')
     })
 
-    it('exits with code 2 when instruction is missing', () => {
-      expect(() => parse([])).toThrow('process.exit(2)')
+    it('throws UsageError with code 2 when instruction is missing', () => {
+      const error = (() => {
+        try {
+          parse([])
+          return null
+        } catch (e) {
+          return e
+        }
+      })()
+      expect(error).toBeDefined()
+      expect(error.name).toBe('UsageError')
+      expect(error.code).toBe(2)
+      expect(error.message).toContain('missing required argument')
     })
   })
 
