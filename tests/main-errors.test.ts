@@ -1,5 +1,5 @@
 // Integration tests for main.ts error handling
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { spawn } from 'child_process'
 import { resolve } from 'path'
 

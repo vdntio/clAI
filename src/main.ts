@@ -20,9 +20,13 @@ import {
 } from './ui/index.js'
 import { executeCommand, ExecutionError } from './output/index.js'
 import { UsageError, InterruptError } from './error/index.js'
+import { registerSignalHandlers, checkInterrupt } from './signals/index.js'
 
 async function main(): Promise<void> {
   try {
+    // Register signal handlers first
+    registerSignalHandlers()
+
     // Parse CLI arguments
     const cli = parseCli(process.argv)
 
@@ -34,6 +38,9 @@ async function main(): Promise<void> {
       process.stderr.write('Error: Offline mode is not yet supported\n')
       process.exit(1)
     }
+
+    // Check for interrupts before context gathering
+    checkInterrupt()
 
     // Gather context for AI prompt
     const context = await gatherContext(config)
@@ -94,6 +101,9 @@ async function main(): Promise<void> {
       process.stderr.write(`\n========================\n\n`)
     }
 
+    // Check for interrupts before AI generation
+    checkInterrupt()
+
     // Generate commands from AI (with spinner)
     const commands = await withSpinner(
       'Thinking...',
@@ -141,6 +151,9 @@ async function main(): Promise<void> {
       }
 
       selectedCommand = result.command
+
+      // Check for interrupts after UI interaction
+      checkInterrupt()
     } else {
       // Non-interactive: use first command
       selectedCommand = commands[0] ?? ''
@@ -153,6 +166,9 @@ async function main(): Promise<void> {
 
     // Execute or output the selected command
     if (selectedCommand) {
+      // Check for interrupts before command execution
+      checkInterrupt()
+
       if (showUI) {
         // Interactive: execute the command
         const result = await executeCommand(selectedCommand)
