@@ -8,26 +8,20 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            target: bun-linux-x64
+          - target: bun-linux-x64
             artifact: clai-linux-x64
-          - os: ubuntu-latest
-            target: bun-linux-arm64
+          - target: bun-linux-arm64
             artifact: clai-linux-arm64
-          - os: macos-latest
-            target: bun-darwin-x64
+          - target: bun-darwin-x64
             artifact: clai-darwin-x64
-          - os: macos-latest
-            target: bun-darwin-arm64
+          - target: bun-darwin-arm64
             artifact: clai-darwin-arm64
-          - os: windows-latest
-            target: bun-windows-x64
+          - target: bun-windows-x64
             artifact: clai-windows-x64.exe
-
-    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -43,21 +37,20 @@ jobs:
         run: bun build --compile --target=${{ matrix.target }} ./src/main.ts --outfile ${{ matrix.artifact }}
 
       - name: Package binary (Unix)
-        if: runner.os != 'Windows'
+        if: "!endsWith(matrix.artifact, '.exe')"
         run: tar -czf ${{ matrix.artifact }}.tar.gz ${{ matrix.artifact }}
 
       - name: Package binary (Windows)
-        if: runner.os == 'Windows'
-        run: 7z a ${{ matrix.artifact }}.zip ${{ matrix.artifact }}
+        if: endsWith(matrix.artifact, '.exe')
+        run: zip ${{ matrix.artifact }}.zip ${{ matrix.artifact }}
 
       - name: Generate checksum
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
+          if [[ "${{ matrix.artifact }}" == *.exe ]]; then
             sha256sum ${{ matrix.artifact }}.zip >> SHA256SUMS.txt
           else
             sha256sum ${{ matrix.artifact }}.tar.gz >> SHA256SUMS.txt
           fi
-        shell: bash
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
