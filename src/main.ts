@@ -21,6 +21,7 @@ import {
 import { executeCommand, ExecutionError } from './output/index.js'
 import { UsageError, InterruptError } from './error/index.js'
 import { registerSignalHandlers, checkInterrupt } from './signals/index.js'
+import { CombinedLogger, LogLevel } from './logging/index.js'
 
 async function main(): Promise<void> {
   try {
@@ -33,9 +34,19 @@ async function main(): Promise<void> {
     // Load and merge config (file + env + CLI)
     const config = getConfig(cli)
 
+    // Determine log level
+    const logLevel: LogLevel = config.quiet
+      ? 'quiet'
+      : config.debug || config.verbose > 0
+        ? 'verbose'
+        : 'normal'
+
+    // Create logger
+    const logger = new CombinedLogger(logLevel, config.ui.color, config.debugFile)
+
     // Handle offline mode (not yet implemented)
     if (config.offline) {
-      process.stderr.write('Error: Offline mode is not yet supported\n')
+      logger.error('Offline mode is not yet supported')
       process.exit(1)
     }
 
@@ -47,48 +58,44 @@ async function main(): Promise<void> {
 
     // Debug output
     if (config.debug) {
-      process.stderr.write('=== Debug: Loaded Config ===\n')
-      process.stderr.write(`Provider: ${config.provider.default}\n`)
-      process.stderr.write(`Context maxFiles: ${config.context.maxFiles}\n`)
-      process.stderr.write(`Context maxHistory: ${config.context.maxHistory}\n`)
-      process.stderr.write(
-        `Safety confirmDangerous: ${config.safety.confirmDangerous}\n`
-      )
-      process.stderr.write(`UI color: ${config.ui.color}\n`)
-      process.stderr.write(`UI interactive: ${config.ui.interactive}\n`)
-      process.stderr.write(`UI numOptions: ${config.ui.numOptions}\n`)
-      process.stderr.write(`Model: ${config.model || '(default)'}\n`)
-      process.stderr.write(`Verbose: ${config.verbose}\n`)
-      process.stderr.write(`Dry run: ${config.dryRun}\n`)
-      process.stderr.write(`Force: ${config.force}\n`)
-      process.stderr.write(`===========================\n\n`)
+      logger.debug('=== Loaded Config ===')
+      logger.debug(`Provider: ${config.provider.default}`)
+      logger.debug(`Context maxFiles: ${config.context.maxFiles}`)
+      logger.debug(`Context maxHistory: ${config.context.maxHistory}`)
+      logger.debug(`Safety confirmDangerous: ${config.safety.confirmDangerous}`)
+      logger.debug(`UI color: ${config.ui.color}`)
+      logger.debug(`UI interactive: ${config.ui.interactive}`)
+      logger.debug(`UI numOptions: ${config.ui.numOptions}`)
+      logger.debug(`Model: ${config.model || '(default)'}`)
+      logger.debug(`Verbose: ${config.verbose}`)
+      logger.debug(`Dry run: ${config.dryRun}`)
+      logger.debug(`Force: ${config.force}`)
+      logger.debug('===========================')
 
-      process.stderr.write('=== Debug: Gathered Context ===\n')
-      process.stderr.write(
-        `OS: ${context.system.osName} ${context.system.osVersion}\n`
-      )
-      process.stderr.write(`Architecture: ${context.system.architecture}\n`)
-      process.stderr.write(`Shell: ${context.system.shell}\n`)
-      process.stderr.write(`User: ${context.system.user}\n`)
-      process.stderr.write(`Memory: ${context.system.totalMemoryMb} MB\n`)
-      process.stderr.write(`CWD: ${context.cwd}\n`)
-      process.stderr.write(`Files (${context.files.length}):\n`)
+      logger.debug('=== Gathered Context ===')
+      logger.debug(`OS: ${context.system.osName} ${context.system.osVersion}`)
+      logger.debug(`Architecture: ${context.system.architecture}`)
+      logger.debug(`Shell: ${context.system.shell}`)
+      logger.debug(`User: ${context.system.user}`)
+      logger.debug(`Memory: ${context.system.totalMemoryMb} MB`)
+      logger.debug(`CWD: ${context.cwd}`)
+      logger.debug(`Files (${context.files.length}):`)
       context.files
         .slice(0, 5)
-        .forEach((f) => process.stderr.write(`  - ${f}\n`))
+        .forEach((f) => logger.debug(`  - ${f}`))
       if (context.files.length > 5) {
-        process.stderr.write(`  ... and ${context.files.length - 5} more\n`)
+        logger.debug(`  ... and ${context.files.length - 5} more`)
       }
-      process.stderr.write(`History (${context.history.length}):\n`)
-      context.history.forEach((h) => process.stderr.write(`  - ${h}\n`))
+      logger.debug(`History (${context.history.length}):`)
+      context.history.forEach((h) => logger.debug(`  - ${h}`))
       if (context.stdin) {
-        process.stderr.write(
-          `Stdin: ${context.stdin.substring(0, 100)}${context.stdin.length > 100 ? '...' : ''}\n`
+        logger.debug(
+          `Stdin: ${context.stdin.substring(0, 100)}${context.stdin.length > 100 ? '...' : ''}`
         )
       } else {
-        process.stderr.write(`Stdin: (none - not piped)\n`)
+        logger.debug(`Stdin: (none - not piped)`)
       }
-      process.stderr.write(`===============================\n\n`)
+      logger.debug('===============================')
 
       // Show the full prompt being sent to AI
       const messages = buildPrompt(
@@ -96,9 +103,9 @@ async function main(): Promise<void> {
         config.instruction,
         config.ui.numOptions
       )
-      process.stderr.write('=== Debug: AI Prompt ===\n')
-      process.stderr.write(formatPromptForDebug(messages))
-      process.stderr.write(`\n========================\n\n`)
+      logger.debug('=== AI Prompt ===')
+      logger.debug(formatPromptForDebug(messages))
+      logger.debug('========================')
     }
 
     // Check for interrupts before AI generation
@@ -124,10 +131,10 @@ async function main(): Promise<void> {
     const safety = checkSafety(commands, config)
 
     if (config.debug) {
-      process.stderr.write('=== Debug: Safety Check ===\n')
-      process.stderr.write(`Is dangerous: ${safety.isDangerous}\n`)
-      process.stderr.write(`Should prompt: ${safety.shouldPrompt}\n`)
-      process.stderr.write(`===========================\n\n`)
+      logger.debug('=== Safety Check ===')
+      logger.debug(`Is dangerous: ${safety.isDangerous}`)
+      logger.debug(`Should prompt: ${safety.shouldPrompt}`)
+      logger.debug('===========================')
     }
 
     // Determine if we should show interactive UI
@@ -174,7 +181,7 @@ async function main(): Promise<void> {
         const result = await executeCommand(selectedCommand)
 
         if (!result.success) {
-          process.stderr.write(`Error: ${result.error.message}\n`)
+          logger.error(result.error.message)
           process.exit(result.error.code)
         }
 
@@ -188,6 +195,7 @@ async function main(): Promise<void> {
       process.exit(0)
     }
   } catch (error) {
+    // Note: logger may not be available if error occurs before config loading
     if (error instanceof UsageError) {
       process.stderr.write(`Error: ${error.message}\n`)
       process.stderr.write("Try 'clai --help' for more information.\n")
