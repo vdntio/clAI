@@ -1,5 +1,5 @@
 {
-  "name": "clai",
+  "name": "@vdntio/clai",
   "version": "0.1.0-alpha.1",
   "description": "AI-powered CLI that converts natural language into executable shell commands",
   "module": "src/main.ts",
@@ -39,6 +39,9 @@
     "node": ">=18"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@iarna/toml": "^2.2.5",
