@@ -1,20 +1,44 @@
 {
   "name": "clai",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "AI-powered CLI that converts natural language into executable shell commands",
   "module": "src/main.ts",
   "type": "module",
-  "private": true,
   "bin": {
     "clai": "dist/main.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc && chmod +x dist/main.js",
     "test": "vitest",
     "lint": "eslint . --ext .ts",
-    "link": "bun link"
+    "link": "bun link",
+    "prepublishOnly": "bun run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vdntio/clAI"
+  },
+  "bugs": "https://github.com/vdntio/clAI/issues",
+  "homepage": "https://github.com/vdntio/clAI#readme",
+  "keywords": [
+    "cli",
+    "ai",
+    "shell",
+    "commands",
+    "natural-language",
+    "openrouter",
+    "bun"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@iarna/toml": "^2.2.5",
@@ -35,6 +59,7 @@
   "dependencies": {
     "chalk": "^5.6.2",
     "ink": "^6.6.0",
-    "react": "^19.2.4"
+    "react": "^19.2.4",
+    "react-devtools-core": "^7.0.1"
   }
 }
