@@ -61,8 +61,12 @@ clAI uses TOML config files. Priority order:
 Example config:
 ```toml
 openrouter_api_key = "sk-..."
-model = "anthropic/claude-3.5-sonnet"
-safety_checks = true
+
+[providers.openrouter]
+model = "qwen/qwen3-coder"  # Default model (can override with anthropic/claude-3.5-sonnet, etc.)
+
+[safety]
+confirm_dangerous = true
 ```
 
 ## Development
@@ -83,7 +87,7 @@ bun run build
 
 ## OpenRouter Costs
 
-clAI uses OpenRouter's API which charges per token. Default model is `anthropic/claude-3.5-sonnet` (~$3 per million input tokens). Get credits at [openrouter.ai](https://openrouter.ai).
+clAI uses OpenRouter's API which charges per token. Default model is `qwen/qwen3-coder` (free tier available). You can override to use other models like `anthropic/claude-3.5-sonnet` (~$3 per million input tokens). Get credits at [openrouter.ai](https://openrouter.ai).
 
 ## License
 
