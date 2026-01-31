@@ -1,6 +1,8 @@
 # Installation
 
-## Option 1: npm (Recommended for Developers)
+> **Prerequisites**: You'll need an OpenRouter API key from [openrouter.ai](https://openrouter.ai)
+
+## Option 1: npm (Recommended)
 
 Requires Node.js 18+:
 
@@ -17,33 +19,41 @@ clai --version
 
 ### Linux / macOS
 
-1. Download the appropriate binary from [Releases](https://github.com/vdntio/clAI/releases)
+1. Download the appropriate binary from [Releases](https://github.com/vdntio/clAI/releases):
+   - Linux x64: `clai-linux-x64.tar.gz`
+   - Linux ARM64: `clai-linux-arm64.tar.gz`
+   - macOS x64: `clai-darwin-x64.tar.gz`
+   - macOS ARM64 (M1/M2): `clai-darwin-arm64.tar.gz`
+
 2. Extract:
    ```bash
-   tar -xzf clai-*-{os}-{arch}.tar.gz
+   tar -xzf clai-*.tar.gz
    ```
-3. Make executable:
+
+3. Move to PATH:
    ```bash
-   chmod +x clai
+   sudo mv clai-* /usr/local/bin/clai
    ```
-4. Move to PATH:
-   ```bash
-   sudo mv clai /usr/local/bin/
-   ```
-5. Verify:
+
+4. Verify:
    ```bash
    clai --version
    ```
 
 ### Windows
 
-1. Download `clai-*-windows-x64.zip` from [Releases](https://github.com/vdntio/clAI/releases)
-2. Extract to desired location (e.g., `C:\Program Files\clai\`)
+1. Download `clai-windows-x64.zip` from [Releases](https://github.com/vdntio/clAI/releases)
+
+2. Extract the `.exe` file to desired location (e.g., `C:\Program Files\clai\`)
+
 3. Add directory to PATH:
-   - Search "Environment Variables"
-   - Edit "Path" variable
-   - Add `C:\Program Files\clai`
-4. Verify:
+   - Press `Win + R`, type `sysdm.cpl`, press Enter
+   - Go to "Advanced" tab → "Environment Variables"
+   - Under "User variables", select "Path" → "Edit"
+   - Click "New" → Add `C:\Program Files\clai`
+   - Click "OK" on all dialogs
+
+4. Restart your terminal and verify:
    ```cmd
    clai --version
    ```
@@ -81,5 +91,9 @@ clAI requires an OpenRouter API key. Set it via:
 ### "API key not configured"
 - Set `OPENROUTER_API_KEY` environment variable
 - Or create config file as shown above
+
+### "Config file has insecure permissions"
+- Config files must be readable only by owner
+- Fix with: `chmod 600 ~/.config/clai/config.toml`
 
 For more issues, see [GitHub Issues](https://github.com/vdntio/clAI/issues)

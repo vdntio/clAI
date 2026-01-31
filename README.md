@@ -1,5 +1,7 @@
 # clAI
 
+> ⚠️ **Alpha Release**: This is an early alpha version. Expect bugs and breaking changes.
+
 AI-powered CLI that converts natural language instructions into executable shell commands using OpenRouter.
 
 ## Example
@@ -79,10 +81,14 @@ bun test
 bun run build
 ```
 
+## OpenRouter Costs
+
+clAI uses OpenRouter's API which charges per token. Default model is `anthropic/claude-3.5-sonnet` (~$3 per million input tokens). Get credits at [openrouter.ai](https://openrouter.ai).
+
 ## License
 
-MIT
+MIT - See [LICENSE](LICENSE) for details.
 
-## Contributing
+## Issues & Feedback
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+Report bugs or request features at [GitHub Issues](https://github.com/vdntio/clAI/issues).
