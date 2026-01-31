@@ -21,7 +21,7 @@ jobs:
           - target: bun-darwin-arm64
             artifact: clai-darwin-arm64
           - target: bun-windows-x64
-            artifact: clai-windows-x64.exe
+            artifact: blacksmith-4vcpu-ubuntu-2404
 
     steps:
       - name: Checkout code
@@ -64,7 +64,7 @@ jobs:
   release:
     name: Create GitHub Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
 
     steps:
       - name: Checkout code
