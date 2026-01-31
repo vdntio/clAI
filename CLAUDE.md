@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**clai** is a CLI that converts natural language instructions into executable shell commands using an AI provider (OpenRouter). This repository is a TypeScript/Node port of the original Rust implementation.
+**clai** is a CLI that converts natural language instructions into executable shell commands using an AI provider (OpenRouter). Currently in **alpha release (v0.1.0-alpha.1)**.
 
 Example usage:
 ```bash
-clai "find all rust files modified today"
-# outputs: find . -name "*.rs" -mtime 0
+clai "find all typescript files modified today"
+# outputs: find . -name "*.ts" -mtime 0
 ```
 
-## Key Specifications
+## Distribution
 
-The complete PRD and technical specification is in [docs/PRD_AND_TECH_SPEC.md](docs/PRD_AND_TECH_SPEC.md). This is the source of truth for implementation.
+- **npm**: Published as `clai@alpha` (install: `npm install -g clai@alpha`)
+- **Binaries**: GitHub Releases provides standalone binaries for Linux/macOS/Windows
+- **GitHub**: https://github.com/vdntio/clAI
 
 ## Architecture
 
