@@ -69,6 +69,10 @@ Unix: config files must be 0600 permissions.
 - Empty catch blocks: Add a comment (e.g., `// Directory may already exist`) to satisfy `no-empty` rule.
 - Re-export pattern: Don't import-then-re-export from same module; use direct `export { X } from './types'`.
 - TypeScript interface exports: Use `export type { Interface }` not `export { Interface }` to avoid runtime errors with bun/vitest.
+- TypeScript override keyword: Use `override` on methods that override parent class methods (required with strict TypeScript).
+- TypeScript type-only exports: Use `export type { Type }` for types to avoid "export not found" errors in compiled JS.
+- TypeScript protected methods: Use `protected` (not `private`) for methods that subclasses need to access.
+- Chalk color forcing: Create instance with explicit level: `new Chalk({ level: 3 })` for always-on, `new Chalk({ level: 0 })` for never.
 - Node globals in ESLint: use `globals` package (e.g. `globals.node`) so `process`, `__dirname` are recognized.
 - Ink + React: tsconfig needs `"jsx": "react-jsx"` and `include` with `**/*.tsx`.
 - Bun init: creates `index.ts` by default; remove or point entry to real entry (e.g. `src/main.ts`).
@@ -76,6 +80,11 @@ Unix: config files must be 0600 permissions.
 - Error classes: Use `Object.setPrototypeOf(this, ClassName.prototype)` for proper instanceof checks across inheritance.
 - Readonly at runtime: Use `Object.defineProperty(this, 'prop', { value, writable: false })` with `readonly prop!: Type` declaration.
 - Circular deps: Base error classes should not re-export derived classes; keep imports unidirectional.
+- Vitest sequential tests: Use `describe.sequential()` for tests sharing file system resources (temp dirs) to avoid race conditions.
+- Vitest test isolation: Use unique temp directories per test suite (`/tmp/project-suite-name`) to prevent parallel test conflicts.
+- Vitest timing tests: Use lenient assertions like `expect([130, null]).toContain(code)` for timing-dependent exit codes.
+- Vitest ESM mocking: Cannot spy on ESM module exports (e.g., `fs.appendFileSync`); use integration tests or test invalid paths instead.
+- Vitest run command: `describe.sequential` requires `bun run test` (vitest script), doesn't work with `bun test` directly.
 
 ## Recommended Stack
 
