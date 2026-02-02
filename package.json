@@ -1,6 +1,6 @@
 {
   "name": "@vdntio/clai",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "AI-powered CLI that converts natural language into executable shell commands",
   "module": "src/main.ts",
   "type": "module",
