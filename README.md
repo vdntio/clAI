@@ -28,7 +28,7 @@ clai "list top 10 largest files in current directory"
 ### npm (Recommended)
 
 ```bash
-npm install -g clai@alpha
+npm install -g @vdntio/clai
 ```
 
 ### Standalone Binary
