@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.target }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     strategy:
       matrix:
         include:
@@ -86,3 +86,41 @@ jobs:
             */clai-*.tar.gz \
             */clai-*.zip \
             SHA256SUMS.txt
+
+  publish-npm:
+    name: Publish to npm
+    needs: build
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Determine npm dist-tag
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" == *-alpha.* ]]; then
+            echo "NPM_TAG=alpha" >> "$GITHUB_ENV"
+          elif [[ "$TAG" == *-beta.* ]]; then
+            echo "NPM_TAG=beta" >> "$GITHUB_ENV"
+          else
+            echo "NPM_TAG=latest" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish package
+        run: npm publish --provenance --access public --tag "${{ env.NPM_TAG }}"
